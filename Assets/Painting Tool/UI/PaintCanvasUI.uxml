@@ -1,9 +1,31 @@
-<?xml version="1.0" encoding="utf-8"?>
-<engine:UXML
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns:engine="UnityEngine.UIElements"
-    xmlns:editor="UnityEditor.UIElements"
-    xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
->
-    
+<engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
+    <Style src="project://database/Assets/Painting%20Tool/UI/PaintCanvasStyleSheet.uss?fileID=7433441132597879392&amp;guid=a82ae5771cd46f34f9d3a6e3b2dce9ee&amp;type=3#PaintCanvasStyleSheet" />
+    <engine:VisualElement name="OuterContainer" style="flex-grow: 1; flex-direction: column;">
+        <engine:VisualElement name="TopContainter" style="flex-grow: 1; height: 10%; flex-direction: row;">
+            <engine:VisualElement name="ButtonContainer" style="flex-grow: 1; flex-direction: row;" />
+            <engine:Label text="Unity Paint!!!!!" style="-unity-font-style: bold; color: rgb(255, 0, 0);" />
+        </engine:VisualElement>
+        <engine:VisualElement name="BottomContainer" style="flex-grow: 1; flex-direction: row; height: 90%;">
+            <engine:VisualElement name="LeftContainer" style="flex-grow: 1; width: 10%;">
+                <engine:VisualElement name="ColourContainer" style="flex-grow: 1; width: 100%;">
+                    <editor:ColorField value="#000000FF" class="ColourField" />
+                    <editor:ColorField value="#FFFFFFFF" enabled="true" class="ColourField" />
+                    <editor:ColorField value="#FF2300FF" class="ColourField" />
+                </engine:VisualElement>
+                <engine:VisualElement name="ColourContainer" style="flex-grow: 1;">
+                    <editor:GradientField label="Gradient" value="Blend:{0,#FF0000FF};{1,#0000FFFF};{1,#00FF00FF}+{0,1};{1,1}" />
+                </engine:VisualElement>
+            </engine:VisualElement>
+            <engine:VisualElement name="CenterContainer" style="flex-grow: 1; width: 85%;">
+                <engine:VisualElement name="CanvasContainer" style="flex-grow: 1; height: 60%;" />
+                <engine:VisualElement name="LayerContainer" style="flex-grow: 1;">
+                    <engine:VisualElement name="TimelineContainer" style="flex-grow: 1; height: 10%;" />
+                    <engine:VisualElement name="LayersContainer" style="flex-grow: 1; height: 90%;" />
+                </engine:VisualElement>
+            </engine:VisualElement>
+            <engine:VisualElement name="RightContainer" style="flex-grow: 1; width: 5%;">
+                <engine:VisualElement name="ButtonContainer" style="flex-grow: 1;" />
+            </engine:VisualElement>
+        </engine:VisualElement>
+    </engine:VisualElement>
 </engine:UXML>
