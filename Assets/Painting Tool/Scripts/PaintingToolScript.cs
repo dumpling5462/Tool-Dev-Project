@@ -2,15 +2,16 @@ using UnityEngine;
 
 public class PaintingToolScript : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    public enum SelectedBrush
     {
-        
+        Paintbrush,
+        Eraser,
+        PaintBucket,
+        Eyedropper
     }
 
-    // Update is called once per frame
-    void Update()
+    public void brush()
     {
-        
+
     }
 }
