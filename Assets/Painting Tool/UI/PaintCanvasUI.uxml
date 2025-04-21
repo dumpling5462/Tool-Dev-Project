@@ -20,21 +20,21 @@
                 </engine:VisualElement>
             </engine:VisualElement>
             <engine:VisualElement name="CenterContainer" style="flex-grow: 1; width: 85%;">
-                <engine:VisualElement name="CenterTopContainer" style="flex-grow: 1; width: auto; height: 5%;">
-                    <engine:SliderInt label="Size" value="0" high-value="50" name="BrushSizeSlider" enabled="true" fill="true" style="width: auto; max-width: 30%; flex-direction: row; flex-wrap: nowrap; justify-content: flex-start; align-self: auto; align-content: auto; align-items: auto; font-size: 50%; white-space: nowrap; text-overflow: ellipsis; -unity-font-style: bold; color: rgb(255, 255, 255); -unity-text-align: upper-left; opacity: 1; visibility: visible;" />
+                <engine:VisualElement name="CenterTopContainer" style="flex-grow: 1; width: auto; height: 5%;" />
+                <engine:VisualElement name="CenterMiddleContainer" style="flex-grow: 1; height: 75%;">
+                    <engine:VisualElement name="DisplayTexture" style="flex-grow: 1; align-self: auto; -unity-text-align: upper-center; border-left-color: rgba(0, 0, 0, 0.78); border-right-color: rgba(0, 0, 0, 0.78); border-top-color: rgba(0, 0, 0, 0.78); border-bottom-color: rgba(0, 0, 0, 0.78); border-top-width: 2px; border-right-width: 2px; border-bottom-width: 2px; border-left-width: 2px; background-image: url(&quot;project://database/Assets/Painting%20Tool/UI/Dwagon-export2.png?fileID=2800000&amp;guid=0176193ee31029d4bb79f5d1ff0c5849&amp;type=3#Dwagon-export2&quot;); align-content: auto; align-items: auto; -unity-background-scale-mode: scale-to-fit; width: 100%; height: 100%;" />
                 </engine:VisualElement>
-                <engine:VisualElement name="CenterMiddleContainer" style="flex-grow: 1; height: 75%;" />
                 <engine:VisualElement name="CenterBottomContainer" style="flex-grow: 1; height: 20%;">
                     <engine:VisualElement name="TimelineContainer" style="flex-grow: 1; height: 10%;" />
                     <engine:VisualElement name="LayersContainer" style="flex-grow: 1; height: 90%;" />
                 </engine:VisualElement>
             </engine:VisualElement>
             <engine:VisualElement name="RightContainer" style="flex-grow: 1; width: 5%;">
-                <engine:VisualElement name="ButtonContainer" style="flex-grow: 1;">
-                    <engine:Button text="Brush" class="button PaintToolbuttons" />
-                    <engine:Button text="Eraser" class="button PaintToolbuttons" />
-                    <engine:Button text="Eye Drop" class="PaintToolbuttons" />
-                    <engine:Button text="Fill" class="PaintToolbuttons" />
+                <engine:VisualElement name="BrushContainer" style="flex-grow: 1; flex-direction: column; flex-wrap: nowrap; width: auto; height: auto; justify-content: flex-start; align-self: flex-end; align-content: stretch;">
+                    <engine:Button text="Brush" name="BrushButton" class="button PaintToolbuttons" />
+                    <engine:Button text="Eraser" name="EraserButton" class="button PaintToolbuttons" />
+                    <engine:Button text="Eye Drop" name="EyeDropButton" class="PaintToolbuttons" />
+                    <engine:Button text="Fill" name="PaintBucketButton" class="PaintToolbuttons" />
                 </engine:VisualElement>
             </engine:VisualElement>
         </engine:VisualElement>

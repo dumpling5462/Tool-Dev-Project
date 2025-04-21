@@ -1,0 +1,24 @@
+.button {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: stretch;
+    align-self: center;
+    align-content: flex-end;
+    width: 30%;
+    height: 20%;
+    flex-wrap: nowrap;
+    font-size: 250%;
+    color: rgb(0, 0, 0);
+    -unity-font-style: bold;
+    background-color: rgb(255, 255, 255);
+    -unity-background-image-tint-color: rgb(255, 255, 255);
+}
+
+.button:hover {
+    -unity-background-image-tint-color: rgb(140, 129, 129);
+    background-color: rgb(140, 129, 129);
+}
+
+.button:active {
+    background-color: rgb(93, 93, 93);
+}

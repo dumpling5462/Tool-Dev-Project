@@ -16,7 +16,7 @@ VisualElement {
 
 .TitleButtons {
     width: 50%;
-    font-size: 300%;
+    font-size: 250%;
     -unity-font-style: bold;
     padding-top: 0;
     padding-right: 0;
@@ -29,15 +29,20 @@ VisualElement {
 }
 
 .PaintToolbuttons {
-    font-size: 20px;
-    justify-content: space-between;
+    font-size: 80%;
+    justify-content: space-around;
     align-items: center;
-    align-self: stretch;
+    align-self: center;
     align-content: stretch;
     flex-direction: column;
     flex-grow: 0;
     flex-shrink: 1;
     position: relative;
+    background-color: rgb(144, 144, 144);
+    -unity-font-style: bold;
+    margin-bottom: 15%;
+    width: auto;
+    height: auto;
 }
 
 .PaintToolbuttons:hover {

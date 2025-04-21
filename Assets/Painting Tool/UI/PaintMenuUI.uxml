@@ -1,9 +1,7 @@
-<?xml version="1.0" encoding="utf-8"?>
-<engine:UXML
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns:engine="UnityEngine.UIElements"
-    xmlns:editor="UnityEditor.UIElements"
-    xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
->
-    
+<engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/Painting%20Tool/UI/PaintMenuStyleSheet.uss?fileID=7433441132597879392&amp;guid=b64011c8610b25c48b52f5d9e162f236&amp;type=3#PaintMenuStyleSheet" />
+    <engine:VisualElement name="Container" style="flex-grow: 1; flex-direction: row; align-self: auto; justify-content: space-around;">
+        <engine:Button text="New File&#10;" name="NewButton" class="button" />
+        <engine:Button text="Load File" name="LoadButton" class="button" />
+    </engine:VisualElement>
 </engine:UXML>
