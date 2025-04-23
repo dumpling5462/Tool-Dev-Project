@@ -14,7 +14,6 @@ public class PaintingToolScript
         PaintBucket,
         Eyedropper
     }
-    [System.Serializable]
     public struct PaintLayer
     {
         public Texture2D LayerImage;
@@ -24,7 +23,7 @@ public class PaintingToolScript
 
     public int CanvasWidth;
     public int CanvasHeight;
-    public List<PaintLayer> Canvas = new List<PaintLayer>();
+    public List<PaintLayer> Canvas;
 
     public int SelectedLayer = 0;
 

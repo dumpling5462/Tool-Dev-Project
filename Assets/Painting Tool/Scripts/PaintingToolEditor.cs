@@ -9,6 +9,9 @@ public class PaintingToolEditor : EditorWindow
     public int height = 64;
     public int width = 64;
 
+    public Color PrimaryColor;
+    public Color SecondaryColor;
+
     [MenuItem("Unity Paint/Menu")]
     public static void ShowMenuWindow()
     {
