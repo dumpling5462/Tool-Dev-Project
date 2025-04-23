@@ -21,13 +21,25 @@ public class PaintingToolEditor : EditorWindow
         VisualElement root = rootVisualElement;
         VisualTreeAsset asset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Painting Tool/UI/PaintMenuUI.uxml");
         asset.CloneTree(root);
-        root.Q<Button>("NewButton").clicked += OpenPainter;
+        StyleSheet sheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Painting Tool/UI/PaintMenuStyleSheet.uss");
+        root.styleSheets.Add(sheet);
+        root.Q<Button>("NewButton").clicked +=OpenCanvasSizeMenu;
 
     }
 
+    private void OpenCanvasSizeMenu()
+    {
+        VisualElement root = rootVisualElement;
+        root.Clear();
+        VisualTreeAsset asset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Painting Tool/UI/PaintCanvasSize.uxml");
+        asset.CloneTree(root);
+        root.Q<Button>("CreateCanvasButton").clicked += OpenPainter;
+    }
     private void OpenPainter()
     {
         VisualElement root = rootVisualElement;
+        width = root.Q<IntegerField>("WidthField").value;
+        height = root.Q<IntegerField>("HeightField").value;
         root.Clear();
         VisualTreeAsset asset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Painting Tool/UI/PaintCanvasUI.uxml");
         asset.CloneTree(root);
@@ -36,6 +48,17 @@ public class PaintingToolEditor : EditorWindow
 
         PainterScript = new PaintingToolScript();
         PainterScript.initialize(width,height,"Layer1");
+        DisplayImage = PainterScript.GetDisplayImage();
+        VisualElement Image = root.Q<VisualElement>("DisplayTexture");
+        Image.style.backgroundImage = new StyleBackground(DisplayImage);
+
+        PainterScript.UpdateCavas += UpdateDisplayImage;
+    }
+
+    private void UpdateDisplayImage()
+    {
+        VisualElement root = rootVisualElement;
+
         DisplayImage = PainterScript.GetDisplayImage();
         VisualElement Image = root.Q<VisualElement>("DisplayTexture");
         Image.style.backgroundImage = new StyleBackground(DisplayImage);
@@ -50,4 +73,9 @@ public class PaintingToolEditor : EditorWindow
         
     }
 
+    public void ExportImage()
+    {
+        UpdateDisplayImage();
+        DisplayImage.EncodeToPNG();
+    }
 }

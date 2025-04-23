@@ -7,7 +7,7 @@
             <engine:IntegerField label="Widith" value="16" max-length="2048" enabled="true" name="WidthField" select-all-on-mouse-up="false" select-all-on-focus="false" select-word-by-double-click="false" select-line-by-triple-click="false" readonly="false" />
             <engine:IntegerField label="Height" value="16" max-length="2048" name="HeightField" focusable="true" select-all-on-focus="false" select-word-by-double-click="false" select-all-on-mouse-up="false" select-line-by-triple-click="false" />
         </engine:VisualElement>
-        <engine:Button text="Create Canvas" style="align-self: center;" />
+        <engine:Button text="Create Canvas" name="CreateCanvasButton" style="align-self: center;" />
         <engine:VisualElement name="BottomContainer" style="flex-grow: 1; height: 40%;" />
     </engine:VisualElement>
 </engine:UXML>

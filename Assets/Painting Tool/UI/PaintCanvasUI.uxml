@@ -15,8 +15,8 @@
             <engine:VisualElement name="LeftContainer" style="flex-grow: 1; width: 5%;">
                 <engine:VisualElement name="LeftTopContainer" style="flex-grow: 1; width: 100%; align-self: flex-start; flex-wrap: wrap; flex-direction: row; height: 80%;" />
                 <engine:VisualElement name="LeftBottomContainer" style="flex-grow: 1; flex-wrap: wrap; flex-direction: row; height: 20%; align-self: auto; justify-content: flex-start; align-content: auto; align-items: auto;">
-                    <editor:ColorField value="#000000FF" show-eye-dropper="false" show-alpha="false" name="ColorField" hdr="false" usage-hints="DynamicColor" class="ColourField" />
-                    <editor:ColorField value="#FFFFFFFF" enabled="true" show-eye-dropper="false" show-alpha="false" name="ColorField" class="ColourField" />
+                    <editor:ColorField value="#000000FF" show-eye-dropper="false" show-alpha="true" name="ColorField" hdr="false" usage-hints="DynamicColor" class="ColourField" />
+                    <editor:ColorField value="#FFFFFFFF" enabled="true" show-eye-dropper="false" show-alpha="true" name="ColorField" class="ColourField" />
                 </engine:VisualElement>
             </engine:VisualElement>
             <engine:VisualElement name="CenterContainer" style="flex-grow: 1; width: 85%;">

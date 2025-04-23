@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -5,6 +6,7 @@ using UnityEngine;
 
 public class PaintingToolScript
 {
+    public event Action UpdateCavas;
     public enum BrushMode
     {
         Paintbrush,
@@ -12,6 +14,7 @@ public class PaintingToolScript
         PaintBucket,
         Eyedropper
     }
+    [System.Serializable]
     public struct PaintLayer
     {
         public Texture2D LayerImage;
@@ -39,11 +42,14 @@ public class PaintingToolScript
 
         Canvas = new List<PaintLayer>();
         PaintLayer layer;
+        CanvasHeight = height;
+        CanvasWidth = width;
         layer.LayerImage = new Texture2D(width,height);
         layer.LayerName = name;
         layer.LayerVisible = true;
       
         Canvas.Add(layer);
+        ChangeMade();
     }
     public void AddLayer(string name)
     {
@@ -64,7 +70,7 @@ public class PaintingToolScript
     }
     public void UpdateDisplayImage()
     {
-
+        UpdateCavas?.Invoke();
     }
 
     public Texture2D GetDisplayImage()
@@ -79,21 +85,32 @@ public class PaintingToolScript
             {
                 if (!layer.LayerVisible)
                     continue;
-                for (int i = 0; i < CanvasHeight; i++)
+                for (int y = 0; y < CanvasHeight; y++)
                 {
-                    for (int j = 0; j < CanvasWidth; j++)
+                    for (int x = 0; x < CanvasWidth; x++)
                     {
-                        if (layer.LayerImage.GetPixel(i, j) != new Color(0, 0, 0, 0))
+                        Color Pixel = layer.LayerImage.GetPixel(x, y);
+                        if (Pixel.a > 0)
                         {
-                            DisplayImage.SetPixel(i, j, layer.LayerImage.GetPixel(i, j));
+                            DisplayImage.SetPixel(x, y, Pixel);
                         }
                     }
                 }
             }
         }
-        else if (Canvas.ElementAt(0).LayerVisible)
+        else if (Canvas[0].LayerVisible)
         {
-            DisplayImage = (Canvas.ElementAt(0).LayerImage);
+            for (int y = 0; y < CanvasHeight;y++)
+            {
+                for (int x = 0;x < CanvasWidth; x++)
+                {
+                    Color Pixel = Canvas[0].LayerImage.GetPixel(x, y);
+                    if (Pixel.a > 0)
+                    {
+                        DisplayImage.SetPixel(x, y, Pixel);
+                    }
+                }
+            }
         }
         DisplayImage.Apply();
         return DisplayImage;
@@ -104,8 +121,11 @@ public class PaintingToolScript
         SelectedBrush = newBrushMode;
     }
 
-    public void PressedPixel(int width,int height)
+    public void PressedPixel(int x,int y)
     {
+        if (x < 0 || x >= CanvasWidth || y < 0 || y >= CanvasHeight)
+            return;
+
         switch (SelectedBrush)
         {
             case BrushMode.Paintbrush:
@@ -117,11 +137,15 @@ public class PaintingToolScript
             case BrushMode.Eyedropper:
                 break;
         }
+
+        ChangeMade();
+        Canvas[SelectedLayer].LayerImage.Apply();
+        UpdateDisplayImage();
     }
 
-    private void paintPixel(int width,int height,Color selectedColour)
+    private void paintPixel(int x,int y,Color selectedColour)
     {
-        Canvas.ElementAt(SelectedLayer).LayerImage.SetPixel(width,height,selectedColour);
+        Canvas.ElementAt(SelectedLayer).LayerImage.SetPixel(x,y,selectedColour);
     }
 
     public void ChangeColour(Color ColourChange)
