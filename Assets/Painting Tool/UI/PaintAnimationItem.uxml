@@ -1,0 +1,12 @@
+<engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/Painting%20Tool/UI/PaintCanvasStyleSheet.uss?fileID=7433441132597879392&amp;guid=a82ae5771cd46f34f9d3a6e3b2dce9ee&amp;type=3#PaintCanvasStyleSheet" />
+    <engine:VisualElement name="Container" style="flex-grow: 1;">
+        <engine:VisualElement name="UpperContainer" style="flex-grow: 1; height: 20%; flex-direction: row; -unity-text-align: upper-center; justify-content: space-around;">
+            <engine:Button text="1" name="AnimationButton" style="width: 70%;" />
+            <engine:Button text="D" name="DeleteButton" style="width: 10%;" />
+        </engine:VisualElement>
+        <engine:VisualElement name="LowerContainer" style="flex-grow: 1; height: 80%;">
+            <engine:ScrollView name="Layers" />
+        </engine:VisualElement>
+    </engine:VisualElement>
+</engine:UXML>

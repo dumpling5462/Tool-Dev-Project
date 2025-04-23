@@ -50,3 +50,11 @@ VisualElement {
 
 .SwatchButtons {
 }
+
+.layer {
+    width: 100%;
+}
+
+.animation {
+    width: 5%;
+}

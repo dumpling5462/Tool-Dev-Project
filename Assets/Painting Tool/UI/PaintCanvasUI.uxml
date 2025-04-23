@@ -3,8 +3,8 @@
     <engine:VisualElement name="OuterContainer" style="flex-grow: 1; flex-direction: column; background-color: rgb(96, 96, 96);">
         <engine:VisualElement name="TopContainter" style="flex-grow: 1; height: 10%; flex-direction: row;">
             <engine:VisualElement name="TopLeftContainer" style="flex-grow: 1; flex-direction: row; left: auto; width: 20%;">
-                <engine:Button text="Save" class="TitleButtons" />
-                <engine:Button text="Export" class="TitleButtons" />
+                <engine:Button text="Save" name="SaveButton" class="TitleButtons" />
+                <engine:Button text="Export" name="ExportButton" class="TitleButtons" />
             </engine:VisualElement>
             <engine:VisualElement name="TopMiddleContainer" style="flex-grow: 1;">
                 <engine:Label text="Unity Paint" style="align-self: center; -unity-font-style: bold; font-size: 35px; color: rgb(255, 255, 255);" />
@@ -14,9 +14,14 @@
         <engine:VisualElement name="BottomContainer" style="flex-grow: 1; flex-direction: row; height: 90%;">
             <engine:VisualElement name="LeftContainer" style="flex-grow: 1; width: 5%;">
                 <engine:VisualElement name="LeftTopContainer" style="flex-grow: 1; width: 100%; align-self: flex-start; flex-wrap: wrap; flex-direction: row; height: 80%;" />
-                <engine:VisualElement name="LeftBottomContainer" style="flex-grow: 1; flex-wrap: wrap; flex-direction: row; height: 20%; align-self: auto; justify-content: flex-start; align-content: auto; align-items: auto;">
-                    <editor:ColorField value="#000000FF" show-eye-dropper="false" show-alpha="true" name="ColorField" hdr="false" usage-hints="DynamicColor" class="ColourField" />
-                    <editor:ColorField value="#FFFFFFFF" enabled="true" show-eye-dropper="false" show-alpha="true" name="ColorField" class="ColourField" />
+                <engine:VisualElement name="LeftBottomContainer" style="flex-grow: 1; flex-wrap: wrap; flex-direction: column; height: 20%; align-self: center; justify-content: flex-start; align-content: auto; align-items: stretch;">
+                    <engine:VisualElement name="HigherContainer" style="flex-grow: 1; align-items: stretch; align-self: stretch; flex-direction: row; flex-wrap: wrap; height: 65%;">
+                        <editor:ColorField value="#000000FF" show-eye-dropper="false" show-alpha="true" name="PrimaryColour" hdr="false" usage-hints="DynamicColor" class="ColourField" />
+                        <editor:ColorField value="#FFFFFFFF" enabled="true" show-eye-dropper="false" show-alpha="true" name="SecondaryColour" class="ColourField" />
+                    </engine:VisualElement>
+                    <engine:VisualElement name="LowerContainer" style="flex-grow: 1; align-self: stretch; align-content: flex-end; align-items: auto; height: 35%;">
+                        <engine:Button text="Swap" name="SwapButton" style="align-self: stretch; align-items: center; justify-content: flex-end;" />
+                    </engine:VisualElement>
                 </engine:VisualElement>
             </engine:VisualElement>
             <engine:VisualElement name="CenterContainer" style="flex-grow: 1; width: 85%;">
@@ -25,8 +30,20 @@
                     <engine:VisualElement name="DisplayTexture" style="flex-grow: 1; align-self: auto; -unity-text-align: upper-center; border-left-color: rgba(0, 0, 0, 0.78); border-right-color: rgba(0, 0, 0, 0.78); border-top-color: rgba(0, 0, 0, 0.78); border-bottom-color: rgba(0, 0, 0, 0.78); border-top-width: 2px; border-right-width: 2px; border-bottom-width: 2px; border-left-width: 2px; background-image: url(&quot;project://database/Assets/Painting%20Tool/UI/Dwagon-export2.png?fileID=2800000&amp;guid=0176193ee31029d4bb79f5d1ff0c5849&amp;type=3#Dwagon-export2&quot;); align-content: auto; align-items: auto; -unity-background-scale-mode: scale-to-fit; width: 100%; height: 100%;" />
                 </engine:VisualElement>
                 <engine:VisualElement name="CenterBottomContainer" style="flex-grow: 1; height: 20%;">
-                    <engine:VisualElement name="TimelineContainer" style="flex-grow: 1; height: 10%;" />
-                    <engine:VisualElement name="LayersContainer" style="flex-grow: 1; height: 90%;" />
+                    <engine:VisualElement name="TimelineContainer" style="flex-grow: 1; height: 10%; flex-direction: row; flex-shrink: 1; justify-content: center;">
+                        <engine:Button text="Button" />
+                        <engine:Button text="Button" />
+                        <engine:Button text="Button" style="flex-direction: row;" />
+                    </engine:VisualElement>
+                    <engine:VisualElement name="LayersContainer" style="flex-grow: 1; height: 90%; flex-direction: row;">
+                        <engine:VisualElement name="LayerInfoContainer" style="flex-grow: 1; width: 20%; height: 100%;">
+                            <engine:Label text="Layers" name="Label" style="height: 10%; font-size: 15px; -unity-text-align: lower-center; align-self: stretch; align-items: flex-start; flex-direction: column; top: auto; bottom: auto; -unity-font-style: bold;" />
+                            <engine:ScrollView name="LayerList" style="height: 90%; overflow: hidden;" />
+                        </engine:VisualElement>
+                        <engine:VisualElement name="AnimationInfoContainer" style="flex-grow: 1; width: 75%; flex-direction: row;">
+                            <engine:ScrollView mode="VerticalAndHorizontal" name="AnimationList" />
+                        </engine:VisualElement>
+                    </engine:VisualElement>
                 </engine:VisualElement>
             </engine:VisualElement>
             <engine:VisualElement name="RightContainer" style="flex-grow: 1; width: 5%;">

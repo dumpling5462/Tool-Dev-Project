@@ -1,6 +1,11 @@
 using UnityEngine;
 using UnityEditor;
 using UnityEngine.UIElements;
+using UnityEditor.ShortcutManagement;
+using UnityEditor.UIElements;
+using static TMPro.SpriteAssetUtilities.TexturePacker_JsonArray;
+using UnityEngine.InputSystem;
+using Unity.VisualScripting;
 public class PaintingToolEditor : EditorWindow
 {
     private PaintingToolScript PainterScript;
@@ -9,8 +14,13 @@ public class PaintingToolEditor : EditorWindow
     public int height = 64;
     public int width = 64;
 
+    private ScrollView LayerList;
+    private ScrollView AnimationList;
+
     public Color PrimaryColor;
     public Color SecondaryColor;
+
+    bool paint;
 
     [MenuItem("Unity Paint/Menu")]
     public static void ShowMenuWindow()
@@ -43,19 +53,67 @@ public class PaintingToolEditor : EditorWindow
         VisualElement root = rootVisualElement;
         width = root.Q<IntegerField>("WidthField").value;
         height = root.Q<IntegerField>("HeightField").value;
+        StyleSheet sheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Painting Tool/UI/PaintMenuStyleSheet.uss");
+        root.styleSheets.Remove(sheet);
         root.Clear();
         VisualTreeAsset asset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Painting Tool/UI/PaintCanvasUI.uxml");
         asset.CloneTree(root);
-        StyleSheet sheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Painting Tool/UI/PaintCanvasStyleSheet.uss");
+        sheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Painting Tool/UI/PaintCanvasStyleSheet.uss");
         root.styleSheets.Add(sheet);
 
-        PainterScript = new PaintingToolScript();
-        PainterScript.initialize(width,height,"Layer1");
+        InitializePainter();
+        InitializePaintBindings();
+
         DisplayImage = PainterScript.GetDisplayImage();
         VisualElement Image = root.Q<VisualElement>("DisplayTexture");
         Image.style.backgroundImage = new StyleBackground(DisplayImage);
 
-        PainterScript.UpdateCavas += UpdateDisplayImage;
+        PainterScript.UpdateCanvas += UpdateDisplayImage;
+    }
+
+    private void InitializePainter()
+    {
+        PainterScript = new PaintingToolScript();
+        PainterScript.initialize(width, height);
+    }
+
+    private void InitializePaintBindings()
+    {
+        if (PainterScript == null)
+        {
+            return;
+        }
+        VisualElement root = rootVisualElement;
+        root.Q<Button>("BrushButton").clicked += Brush;
+        root.Q<Button>("EraserButton").clicked += Eraser;
+        root.Q<Button>("EyeDropButton").clicked += EyeDropper;
+        root.Q<Button>("PaintBucketButton").clicked += PaintBucket;
+
+        ColorField color = root.Q<ColorField>("PrimaryColour");
+        color.RegisterValueChangedCallback(ColorChange => { PrimaryColor = ColorChange.newValue; ChangeColour(); });
+        PrimaryColor = color.value;
+        ColorField color2 = root.Q<ColorField>("SecondaryColour");
+        color2.RegisterValueChangedCallback(ColorChange => { SecondaryColor = ColorChange.newValue; });
+        SecondaryColor = color2.value;
+
+        root.Q<Button>("SwapButton").clicked += SwapColour;
+
+        root.Q<Button>("SaveButton").clicked += SaveImage;
+        root.Q<Button>("ExportButton").clicked += ExportImage;
+
+        AnimationList = root.Q<ScrollView>("AnimationList");
+        LayerList = root.Q<ScrollView>("LayerList");
+
+        VisualTreeAsset AnimationInfo = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Painting Tool/UI/PaintAnimationItem.uxml");
+
+        VisualElement DisplayTex = root.Q<VisualElement>("DisplayTexture");
+        DisplayTex.RegisterCallback<ClickEvent>(Paint);
+        DisplayTex.RegisterCallback<MouseEnterEvent>(MouseOver);
+        DisplayTex.RegisterCallback<MouseLeaveEvent>(MouseOut);
+        
+
+        AddAnimation();
+        AddLayer();
     }
 
     private void UpdateDisplayImage()
@@ -64,21 +122,181 @@ public class PaintingToolEditor : EditorWindow
 
         DisplayImage = PainterScript.GetDisplayImage();
         VisualElement Image = root.Q<VisualElement>("DisplayTexture");
+        DisplayImage.filterMode = FilterMode.Point;
         Image.style.backgroundImage = new StyleBackground(DisplayImage);
     }
 
-    public void OnGUI()
+    [Shortcut("b")]
+    private void Brush()
     {
+        if (PainterScript == null)
+        {
+            return;
+        }
+        PainterScript.SelectedBrush = PaintingToolScript.BrushMode.Paintbrush;
+    }
+    [Shortcut("e")]
+    private void Eraser()
+    {
+        if (PainterScript == null)
+        {
+            return;
+        }
+        PainterScript.SelectedBrush = PaintingToolScript.BrushMode.Eraser;
+    }
+    [Shortcut("g")]
+    private void PaintBucket()
+    {
+        if (PainterScript == null)
+        {
+            return;
+        }
+        PainterScript.SelectedBrush = PaintingToolScript.BrushMode.PaintBucket;
+    }
+    [Shortcut("i")]
+    private void EyeDropper()
+    {
+        if (PainterScript == null)
+        {
+            return;
+        }
+        PainterScript.SelectedBrush = PaintingToolScript.BrushMode.Eyedropper;
+    }
+    [Shortcut("+")]
+    private void IncreaseBrushSize()
+    {
+        if (PainterScript == null)
+        {
+            return;
+        }
+    }
+    [Shortcut("-")]
+    private void DecreaseBrushSize() 
+    {
+        if (PainterScript == null)
+        {  
+            return; 
+        }
+    }
+    private void UndoChange()
+    {
+
+    }
+    private void RedoChange()
+    {
+
+    }
+    private void AddAnimation()
+    {
+        if (PainterScript == null)
+        {
+            return;
+        }
+        VisualTreeAsset AnimationInfo = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Painting Tool/UI/PaintAnimationItem.uxml");
+        VisualElement Frame = AnimationInfo.CloneTree();
+        AnimationList.Add(Frame);
+
+        Button Animationbutton = Frame.Q<Button>("AnimationButton");
+        Animationbutton.RegisterCallback<ClickEvent, Button>(SelectAnimation,Animationbutton);
+        UpdateAnimationLayers();
+        PainterScript.AddAnimation();
         
     }
-    public void Update()
+    private void UpdateAnimationLayers()
     {
-        
+        while (AnimationList.Q<ScrollView>("Layers").childCount < LayerList.childCount)
+        {
+                Button NewButton = new Button();
+                AnimationList.Q<ScrollView>("Layers").Add(NewButton);
+                NewButton.text = AnimationList.Q<ScrollView>("Layers").IndexOf(NewButton)+1.ToString();
+        }
     }
 
+    private void ToggleVisibilty()
+    {
+
+    }
+    private void SelectLayer(ClickEvent Clicked, Button LayerButton)
+    {
+        int index = LayerList.IndexOf(LayerButton);
+        if (index > 0)
+        {
+            PainterScript.SelectedLayer = index;
+        }
+    }
+    private void SelectAnimation(ClickEvent Clicked,Button AnimationButton)
+    {
+        int index = AnimationList.IndexOf(AnimationButton);
+        if (index > 0)
+        {
+            PainterScript.SelectedAnimation = index;
+        }
+    }
+    private void AddLayer()
+    {
+        if (PainterScript == null)
+        {
+            return;
+        }
+        VisualTreeAsset LayerInfo = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Painting Tool/UI/PaintLayerItem.uxml");
+        VisualElement Layer = LayerInfo.CloneTree();
+        LayerList.Add(Layer);
+        Button LayerButton = Layer.Q<Button>("LayerButton");
+        LayerButton.RegisterCallback<ClickEvent, Button>(SelectLayer, LayerButton);
+        UpdateAnimationLayers();
+        PainterScript.AddLayer("New Layer");
+    }
+    private void ChangeColour()
+    {
+        if (PainterScript == null)
+        {
+            return;
+        }
+        PainterScript.ChangeColour(PrimaryColor);
+    }
+
+    private void Paint(ClickEvent Clicked)
+    {
+        if (PainterScript == null)
+        {
+            return;
+        }
+        PainterScript.PressedPixel((int)Event.current.mousePosition.x,(int)Event.current.mousePosition.y);
+    }
+    private void SwapColour()
+    {
+        if (PainterScript == null)
+        {
+            return;
+        }
+        Color temp = PrimaryColor;
+        PrimaryColor = SecondaryColor;
+        SecondaryColor = temp;
+
+        VisualElement root = rootVisualElement;
+        root.Q<ColorField>("PrimaryColour").value = PrimaryColor;
+        root.Q<ColorField>("SecondaryColour").value = SecondaryColor;
+
+        ChangeColour();
+    }
     public void ExportImage()
     {
         UpdateDisplayImage();
         DisplayImage.EncodeToPNG();
+    }
+
+    public void LoadImage()
+    {
+
+    }
+    public void SaveImage() { }
+
+    private void MouseOver(MouseEnterEvent mouse)
+    {
+        paint = true;
+    }
+    private void MouseOut(MouseLeaveEvent mouse)
+    {
+        paint = false;
     }
 }
