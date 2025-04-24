@@ -20,7 +20,7 @@ public class PaintingToolEditor : EditorWindow
     public Color PrimaryColor;
     public Color SecondaryColor;
 
-    bool paint;
+    bool paint=false;
 
     [MenuItem("Unity Paint/Menu")]
     public static void ShowMenuWindow()
@@ -74,7 +74,7 @@ public class PaintingToolEditor : EditorWindow
     private void InitializePainter()
     {
         PainterScript = new PaintingToolScript();
-        PainterScript.initialize(width, height);
+        PainterScript.Initialize(width, height);
     }
 
     private void InitializePaintBindings()
@@ -103,6 +103,9 @@ public class PaintingToolEditor : EditorWindow
 
         AnimationList = root.Q<ScrollView>("AnimationList");
         LayerList = root.Q<ScrollView>("LayerList");
+
+        root.Q<Button>("AddLayerButton").clicked+=AddLayer;
+        root.Q<Button>("AddAnimationButton").clicked += AddAnimation;
 
         VisualTreeAsset AnimationInfo = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Painting Tool/UI/PaintAnimationItem.uxml");
 
@@ -194,9 +197,10 @@ public class PaintingToolEditor : EditorWindow
         }
         VisualTreeAsset AnimationInfo = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Painting Tool/UI/PaintAnimationItem.uxml");
         VisualElement Frame = AnimationInfo.CloneTree();
-        AnimationList.Add(Frame);
+        AnimationList.Insert(AnimationList.childCount-1,Frame);
 
         Button Animationbutton = Frame.Q<Button>("AnimationButton");
+        Animationbutton.text = (AnimationList.IndexOf(Frame)+1).ToString();
         Animationbutton.RegisterCallback<ClickEvent, Button>(SelectAnimation,Animationbutton);
         UpdateAnimationLayers();
         PainterScript.AddAnimation();
@@ -204,32 +208,43 @@ public class PaintingToolEditor : EditorWindow
     }
     private void UpdateAnimationLayers()
     {
-        while (AnimationList.Q<ScrollView>("Layers").childCount < LayerList.childCount)
-        {
+        foreach(ScrollView LayerData in AnimationList.Query<ScrollView>().ToList())
+        { 
+             while (LayerData.childCount < LayerList.childCount-1)
+             {
                 Button NewButton = new Button();
-                AnimationList.Q<ScrollView>("Layers").Add(NewButton);
-                NewButton.text = AnimationList.Q<ScrollView>("Layers").IndexOf(NewButton)+1.ToString();
+                LayerData.Add(NewButton);
+                NewButton.text = (LayerData.IndexOf(NewButton)+1).ToString();
+             }
         }
     }
 
-    private void ToggleVisibilty()
+    private void ToggleVisibilty(ClickEvent clicked, Toggle ToggleButton)
     {
+        int index = LayerList.IndexOf(ToggleButton.parent.parent);
+        UnityEngine.Debug.Log(index);
+        PainterScript.UpdateVisibilty(index,ToggleButton.value);
+        
 
     }
     private void SelectLayer(ClickEvent Clicked, Button LayerButton)
     {
-        int index = LayerList.IndexOf(LayerButton);
-        if (index > 0)
+        int index = LayerList.IndexOf(LayerButton.parent.parent);
+        if (index >= 0 && index < PainterScript.CanvasImage[0].Count)
         {
-            PainterScript.SelectedLayer = index;
+            PainterScript.UpdateSelectedLayer(index);
+            LayerButton.style.backgroundColor = Color.red;
+            //LayerButton.text = index.ToString();
         }
     }
     private void SelectAnimation(ClickEvent Clicked,Button AnimationButton)
     {
-        int index = AnimationList.IndexOf(AnimationButton);
-        if (index > 0)
+        int index = AnimationList.IndexOf(AnimationButton.parent.parent.parent);
+        AnimationButton.style.backgroundColor = Color.red;
+        AnimationButton.text = index.ToString();
+        if (index >= 0)
         {
-            PainterScript.SelectedAnimation = index;
+            PainterScript.UpdateSelectedAnimation(index);
         }
     }
     private void AddLayer()
@@ -240,11 +255,15 @@ public class PaintingToolEditor : EditorWindow
         }
         VisualTreeAsset LayerInfo = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Painting Tool/UI/PaintLayerItem.uxml");
         VisualElement Layer = LayerInfo.CloneTree();
-        LayerList.Add(Layer);
+        LayerList.Insert(LayerList.childCount-1,Layer);
         Button LayerButton = Layer.Q<Button>("LayerButton");
+        LayerButton.text = ("Layer " + (LayerList.IndexOf(Layer)+1));
         LayerButton.RegisterCallback<ClickEvent, Button>(SelectLayer, LayerButton);
         UpdateAnimationLayers();
-        PainterScript.AddLayer("New Layer");
+        PainterScript.AddLayer("Layer " + (LayerList.IndexOf(Layer) + 1));
+
+        Toggle ToggleButton = Layer.Q<Toggle>("Toggle");
+        ToggleButton.RegisterCallback<ClickEvent, Toggle>(ToggleVisibilty, ToggleButton);
     }
     private void ChangeColour()
     {
@@ -261,6 +280,8 @@ public class PaintingToolEditor : EditorWindow
         {
             return;
         }
+        if (!paint)
+            return;
         PainterScript.PressedPixel((int)Event.current.mousePosition.x,(int)Event.current.mousePosition.y);
     }
     private void SwapColour()

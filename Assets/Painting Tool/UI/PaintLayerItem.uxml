@@ -1,7 +1,7 @@
 <engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <Style src="project://database/Assets/Painting%20Tool/UI/PaintCanvasStyleSheet.uss?fileID=7433441132597879392&amp;guid=a82ae5771cd46f34f9d3a6e3b2dce9ee&amp;type=3#PaintCanvasStyleSheet" />
     <engine:VisualElement name="Layer" class="layer" style="flex-grow: 1; height: 30px; flex-direction: row; width: 95%; align-items: stretch; justify-content: flex-start; align-self: center;">
-        <engine:Toggle name="Toggle" toggle-on-label-click="false" value="true" style="width: 5%;" />
+        <engine:Toggle name="Toggle" toggle-on-label-click="false" value="true" style="width: 5%; overflow: visible;" />
         <engine:Button text="Layer" name="LayerButton" style="width: 80%;" />
         <engine:VisualElement name="SideButtons" style="flex-grow: 1; flex-direction: row;">
             <engine:VisualElement name="LeftButtonContainer" class="LayerButtonStyle" style="flex-grow: 1; flex-direction: column; width: 100%; height: 50%; align-self: flex-start; align-content: stretch;">

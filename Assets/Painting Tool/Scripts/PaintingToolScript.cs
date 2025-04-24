@@ -24,7 +24,7 @@ public class PaintingToolScript
 
     public int CanvasWidth;
     public int CanvasHeight;
-    public List<List<PaintLayer>> Canvas;
+    public List<List<PaintLayer>> CanvasImage = new List<List<PaintLayer>>();
 
     public int SelectedLayer = 0;
     public int SelectedAnimation = 0;
@@ -33,50 +33,57 @@ public class PaintingToolScript
     public BrushMode SelectedBrush = BrushMode.Paintbrush;
     public int BrushSize;
 
-    private int Stacksize = 24;
+    private readonly int Stacksize = 24;
     private UndoRedoChangeStack UndoRedoStack;
 
-    public void initialize(int width, int height)
+    public void Initialize(int width, int height)
     {
         UndoRedoStack = new UndoRedoChangeStack();
         UndoRedoStack.initialize(Stacksize);
-        Canvas = new List<List<PaintLayer>>();
+        CanvasImage = new List<List<PaintLayer>>();
         CanvasHeight = height;
         CanvasWidth = width;
     }
     public void AddAnimation()
     {
         List<PaintLayer> Animation = new List<PaintLayer>();
-        if (Canvas.Count > 1)
+        if (CanvasImage.Count >= 1)
         {
-            foreach (PaintLayer layer in Canvas[0])
+            UnityEngine.Debug.Log("Adding layer info");
+            foreach (PaintLayer layer in CanvasImage[0])
             {
                 PaintLayer newLayer = new PaintLayer();
                 newLayer.LayerImage = new Texture2D(CanvasWidth,CanvasHeight);
+                newLayer.LayerImage.filterMode = FilterMode.Point;
                 newLayer.LayerName = layer.LayerName;
                 newLayer.LayerVisible = true;
                 Animation.Add(newLayer);
             }
         }
-        Canvas.Add(Animation);
+        CanvasImage.Add(Animation);
     }
     public void AddLayer(string name)
     {
-        PaintLayer layer;
-        layer.LayerImage = new Texture2D(CanvasWidth, CanvasHeight);
-        layer.LayerName = name;
-        layer.LayerVisible = true;
-        Canvas[SelectedAnimation].Add(layer);
+        foreach(List<PaintLayer> Frame in CanvasImage)
+        {
+            PaintLayer layer = new PaintLayer();
+            layer.LayerImage = new Texture2D(CanvasWidth, CanvasHeight);
+            layer.LayerName = name;
+            layer.LayerVisible = true;
+            layer.LayerImage.filterMode = FilterMode.Point;
+            FillTexture2D(layer.LayerImage);
+            Frame.Add(layer);
+        }
     }
     public void RemoveLayer(int ID)
     {
-        if (ID >= Canvas[0].Count)
+        if (ID >= CanvasImage[0].Count)
         {
             return;
         }
-        for (int i = 0; i < Canvas.Count; i++)
+        for (int i = 0; i < CanvasImage.Count; i++)
         {
-            Canvas[i].RemoveAt(ID);
+            CanvasImage[i].RemoveAt(ID);
         }
         if (SelectedLayer == ID)
         {
@@ -86,11 +93,11 @@ public class PaintingToolScript
     }
     public void RemoveAnimation(int ID)
     {
-        if (ID >= Canvas.Count)
+        if (ID >= CanvasImage.Count)
         {
             return;
         }
-        Canvas.RemoveAt(ID);
+        CanvasImage.RemoveAt(ID);
         if (SelectedAnimation == ID)
         {
             SelectedAnimation = 0;
@@ -98,7 +105,7 @@ public class PaintingToolScript
         UpdateDisplayImage();
     }
 
-    public void brush()
+    public void Brush()
     {
 
     }
@@ -110,9 +117,10 @@ public class PaintingToolScript
     public Texture2D GetDisplayImage()
     {
         Texture2D DisplayImage = new Texture2D(CanvasWidth,CanvasHeight);
-        if (Canvas[SelectedAnimation].Count > 1)
+        DisplayImage.filterMode = FilterMode.Point;
+        if (CanvasImage[SelectedAnimation].Count > 1)
         {
-            List<PaintLayer> layers = new List<PaintLayer>(Canvas[SelectedAnimation]);
+            List<PaintLayer> layers = new List<PaintLayer>(CanvasImage[SelectedAnimation]);
             layers.Reverse();
 
             foreach (PaintLayer layer in layers)
@@ -132,13 +140,13 @@ public class PaintingToolScript
                 }
             }
         }
-        else if (Canvas[SelectedAnimation][0].LayerVisible)
+        else if (CanvasImage[SelectedAnimation][0].LayerVisible)
         {
-            for (int y = 0; y < CanvasHeight;y++)
+            for (int y = 0; y < CanvasHeight; y++)
             {
-                for (int x = 0;x < CanvasWidth; x++)
+                for (int x = 0; x < CanvasWidth; x++)
                 {
-                    Color Pixel = Canvas[SelectedAnimation][0].LayerImage.GetPixel(x, y);
+                    Color Pixel = CanvasImage[SelectedAnimation][0].LayerImage.GetPixel(x, y);
                     if (Pixel.a > 0)
                     {
                         DisplayImage.SetPixel(x, y, Pixel);
@@ -159,28 +167,28 @@ public class PaintingToolScript
     {
         //if (x < 0 || x >= CanvasWidth || y < 0 || y >= CanvasHeight)
         //    return;
-
         switch (SelectedBrush)
         {
             case BrushMode.Paintbrush:
-                paintPixel(x,y, SelectedColour);
+                PaintPixel(x,y, SelectedColour);
                 break;
             case BrushMode.PaintBucket:
                 break;
             case BrushMode.Eraser:
+                PaintPixel(x, y, new Color(0,0,0,0));
                 break;
             case BrushMode.Eyedropper:
                 break;
         }
 
         ChangeMade();
-        Canvas[SelectedAnimation][SelectedLayer].LayerImage.Apply();
+        CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.Apply();
         UpdateDisplayImage();
     }
 
-    private void paintPixel(int x,int y,Color selectedColour)
+    private void PaintPixel(int x,int y,Color selectedColour)
     {
-        Canvas[SelectedAnimation].ElementAt(SelectedLayer).LayerImage.SetPixel(x,y,selectedColour);
+        CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.SetPixel(x,y,selectedColour);
     }
 
     public void ChangeColour(Color ColourChange)
@@ -209,12 +217,48 @@ public class PaintingToolScript
         ChangesStack.Changes NewChange;
         NewChange.SelectedLayer = SelectedLayer;
         NewChange.SelectedAnim = SelectedAnimation;
-        NewChange.layer = Canvas[SelectedAnimation].ElementAt(SelectedLayer);
+        NewChange.layer = CanvasImage[SelectedAnimation].ElementAt(SelectedLayer);
         UndoRedoStack.push(NewChange);
     }
     public void ApplyChange(ChangesStack.Changes change)
     {
-        Canvas[change.SelectedAnim][change.SelectedLayer] = change.layer;
+        CanvasImage[change.SelectedAnim][change.SelectedLayer] = change.layer;
+        UpdateDisplayImage();
+    }
+
+    public void UpdateSelectedLayer(int NewLayerIndex)
+    {
+        if (NewLayerIndex >= CanvasImage[SelectedAnimation].Count)
+            return;
+        SelectedLayer = NewLayerIndex;
+    }
+
+    public void UpdateSelectedAnimation(int NewAnimationIndex)
+    {
+        if (NewAnimationIndex >= CanvasImage.Count)
+            return;
+        SelectedAnimation = NewAnimationIndex;
+        UnityEngine.Debug.Log(NewAnimationIndex);
+        UpdateDisplayImage();
+    }
+
+    private void FillTexture2D(Texture2D layer)
+    {
+        Color32[] colors = new Color32[CanvasWidth * CanvasHeight];
+        for (int i = 0; i < colors.Length; i++)
+            colors[i] = new Color(0, 0, 0, 0);
+        layer.SetPixels32(colors);
+        layer.Apply();
+    }
+
+    public void UpdateVisibilty(int LayerIndex, bool Visibility)
+    {
+        foreach (List<PaintLayer> Frame in CanvasImage) 
+        {
+            PaintLayer layer = Frame[LayerIndex];
+            layer.LayerVisible = Visibility;
+            Frame[LayerIndex] = layer;
+        }
         UpdateDisplayImage();
     }
 }
