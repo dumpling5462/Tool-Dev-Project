@@ -41,7 +41,7 @@ public class ChangesStack
     }
 
     //returns the top item of the stack and decrements the top pointer
-    public virtual Changes? pop()
+    public virtual Changes? pop(Changes? oldstate)
     {
         if (!isEmpty())
         {

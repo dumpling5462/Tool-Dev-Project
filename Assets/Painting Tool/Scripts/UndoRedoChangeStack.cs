@@ -15,13 +15,17 @@ public class UndoRedoChangeStack : ChangesStack
         Redo.nullStack();
         base.push(change);     
     }
-
-    public override Changes? pop()
+    public void pushRedo(Changes change)
     {
-        Changes? change  = base.pop();
+        base.push(change);
+    }
+
+    public override Changes? pop(Changes? oldState)
+    {
+        Changes? change  = base.pop(null);
         if (change != null)
         {
-            Redopush((Changes)change);
+            Redopush((Changes)oldState);
         }
         return change;
     }
@@ -34,7 +38,7 @@ public class UndoRedoChangeStack : ChangesStack
     //returns the top item of the stack and decrements the top pointer
     public Changes? Redopop()
     {
-        return Redo.pop();
+        return Redo.pop(null);
     }
 
     //checks the top item of the stack

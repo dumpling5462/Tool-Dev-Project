@@ -167,6 +167,7 @@ public class PaintingToolScript
     {
         //if (x < 0 || x >= CanvasWidth || y < 0 || y >= CanvasHeight)
         //    return;
+        ChangeMade();
         switch (SelectedBrush)
         {
             case BrushMode.Paintbrush:
@@ -181,7 +182,6 @@ public class PaintingToolScript
                 break;
         }
 
-        ChangeMade();
         CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.Apply();
         UpdateDisplayImage();
     }
@@ -198,7 +198,7 @@ public class PaintingToolScript
 
     public void Undo()
     {
-        ChangesStack.Changes? CurrentChange = UndoRedoStack.pop();
+        ChangesStack.Changes? CurrentChange = UndoRedoStack.pop(GetChange());
         if (CurrentChange != null)
         {
             ApplyChange((ChangesStack.Changes)CurrentChange);
@@ -206,6 +206,7 @@ public class PaintingToolScript
     }
     public void Redo()
     {
+        UndoRedoStack.pushRedo(GetChange());
         ChangesStack.Changes? CurrentChange = UndoRedoStack.Redopop();
         if (CurrentChange != null)
         {
@@ -214,11 +215,30 @@ public class PaintingToolScript
     }
     public void ChangeMade()
     {
+        UndoRedoStack.push(GetChange());
+    }
+    private ChangesStack.Changes GetChange()
+    {
         ChangesStack.Changes NewChange;
         NewChange.SelectedLayer = SelectedLayer;
         NewChange.SelectedAnim = SelectedAnimation;
-        NewChange.layer = CanvasImage[SelectedAnimation].ElementAt(SelectedLayer);
-        UndoRedoStack.push(NewChange);
+        PaintLayer ChangedLayer = new();
+        Texture2D tex = new Texture2D(CanvasWidth, CanvasHeight);
+        for (int y = 0; y < CanvasHeight; y++)
+        {
+            for (int x = 0; x < CanvasHeight; x++)
+            {
+                tex.SetPixel(x, y, CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.GetPixel(x, y));
+            }
+        }
+        ChangedLayer.LayerImage = tex;
+        ChangedLayer.LayerName = CanvasImage[SelectedAnimation][SelectedLayer].LayerName;
+        ChangedLayer.LayerVisible = CanvasImage[SelectedAnimation][SelectedLayer].LayerVisible;
+
+
+        NewChange.layer = ChangedLayer;
+
+        return NewChange;
     }
     public void ApplyChange(ChangesStack.Changes change)
     {
@@ -235,6 +255,7 @@ public class PaintingToolScript
 
     public void UpdateSelectedAnimation(int NewAnimationIndex)
     {
+        ChangeMade();
         if (NewAnimationIndex >= CanvasImage.Count)
             return;
         SelectedAnimation = NewAnimationIndex;
@@ -253,6 +274,7 @@ public class PaintingToolScript
 
     public void UpdateVisibilty(int LayerIndex, bool Visibility)
     {
+        ChangeMade();
         foreach (List<PaintLayer> Frame in CanvasImage) 
         {
             PaintLayer layer = Frame[LayerIndex];

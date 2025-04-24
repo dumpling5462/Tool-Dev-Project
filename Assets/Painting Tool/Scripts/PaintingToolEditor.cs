@@ -107,6 +107,9 @@ public class PaintingToolEditor : EditorWindow
         root.Q<Button>("AddLayerButton").clicked+=AddLayer;
         root.Q<Button>("AddAnimationButton").clicked += AddAnimation;
 
+        root.Q<Button>("UndoButton").clicked+= UndoChange;
+        root.Q<Button>("RedoButton").clicked+= RedoChange;
+
         VisualTreeAsset AnimationInfo = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Painting Tool/UI/PaintAnimationItem.uxml");
 
         VisualElement DisplayTex = root.Q<VisualElement>("DisplayTexture");
@@ -183,11 +186,19 @@ public class PaintingToolEditor : EditorWindow
     }
     private void UndoChange()
     {
-
+        if (PainterScript == null)
+        {
+            return;
+        }
+        PainterScript.Undo();
     }
     private void RedoChange()
     {
-
+        if (PainterScript == null)
+        {
+            return;
+        }
+        PainterScript.Redo();
     }
     private void AddAnimation()
     {
@@ -319,5 +330,5 @@ public class PaintingToolEditor : EditorWindow
     private void MouseOut(MouseLeaveEvent mouse)
     {
         paint = false;
-    }
+    }       
 }
