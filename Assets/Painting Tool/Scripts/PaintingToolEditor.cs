@@ -3,9 +3,6 @@ using UnityEditor;
 using UnityEngine.UIElements;
 using UnityEditor.ShortcutManagement;
 using UnityEditor.UIElements;
-using static TMPro.SpriteAssetUtilities.TexturePacker_JsonArray;
-using UnityEngine.InputSystem;
-using Unity.VisualScripting;
 public class PaintingToolEditor : EditorWindow
 {
     private PaintingToolScript PainterScript;
@@ -68,7 +65,6 @@ public class PaintingToolEditor : EditorWindow
         VisualElement Image = root.Q<VisualElement>("DisplayTexture");
         Image.style.backgroundImage = new StyleBackground(DisplayImage);
 
-        PainterScript.UpdateCanvas += UpdateDisplayImage;
     }
 
     private void InitializePainter()
@@ -92,6 +88,7 @@ public class PaintingToolEditor : EditorWindow
         ColorField color = root.Q<ColorField>("PrimaryColour");
         color.RegisterValueChangedCallback(ColorChange => { PrimaryColor = ColorChange.newValue; ChangeColour(); });
         PrimaryColor = color.value;
+        PainterScript.SelectedColour = PrimaryColor;
         ColorField color2 = root.Q<ColorField>("SecondaryColour");
         color2.RegisterValueChangedCallback(ColorChange => { SecondaryColor = ColorChange.newValue; });
         SecondaryColor = color2.value;
@@ -110,16 +107,20 @@ public class PaintingToolEditor : EditorWindow
         root.Q<Button>("UndoButton").clicked+= UndoChange;
         root.Q<Button>("RedoButton").clicked+= RedoChange;
 
-        VisualTreeAsset AnimationInfo = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Painting Tool/UI/PaintAnimationItem.uxml");
-
         VisualElement DisplayTex = root.Q<VisualElement>("DisplayTexture");
         DisplayTex.RegisterCallback<ClickEvent>(Paint);
         DisplayTex.RegisterCallback<MouseEnterEvent>(MouseOver);
         DisplayTex.RegisterCallback<MouseLeaveEvent>(MouseOut);
-        
+
+        PainterScript.UpdateCanvas += UpdateDisplayImage;
+        PainterScript.ColourChange += UpdateColour;
+        PainterScript.LayerSelected += UpdateLayerButtons;
+        PainterScript.AnimationSelected += UpdateAnimationButtons;
 
         AddAnimation();
         AddLayer();
+        UpdateAnimationButtons();
+        UpdateLayerButtons();
     }
 
     private void UpdateDisplayImage()
@@ -140,6 +141,7 @@ public class PaintingToolEditor : EditorWindow
             return;
         }
         PainterScript.SelectedBrush = PaintingToolScript.BrushMode.Paintbrush;
+        UpdateVisual();
     }
     [Shortcut("e")]
     private void Eraser()
@@ -149,6 +151,7 @@ public class PaintingToolEditor : EditorWindow
             return;
         }
         PainterScript.SelectedBrush = PaintingToolScript.BrushMode.Eraser;
+        UpdateVisual();
     }
     [Shortcut("g")]
     private void PaintBucket()
@@ -158,6 +161,7 @@ public class PaintingToolEditor : EditorWindow
             return;
         }
         PainterScript.SelectedBrush = PaintingToolScript.BrushMode.PaintBucket;
+        UpdateVisual();
     }
     [Shortcut("i")]
     private void EyeDropper()
@@ -167,6 +171,26 @@ public class PaintingToolEditor : EditorWindow
             return;
         }
         PainterScript.SelectedBrush = PaintingToolScript.BrushMode.Eyedropper;
+        UpdateVisual();
+    }
+
+    private void UpdateVisual()
+    {
+        if (PainterScript == null)
+        {
+            return;
+        }
+        switch (PainterScript.SelectedBrush)
+        {
+            case PaintingToolScript.BrushMode.Paintbrush:
+                break;
+            case PaintingToolScript.BrushMode.Eraser:
+                break;
+            case PaintingToolScript.BrushMode.PaintBucket:
+                break;
+            case PaintingToolScript.BrushMode.Eyedropper:
+                break;
+        }
     }
     [Shortcut("+")]
     private void IncreaseBrushSize()
@@ -215,16 +239,39 @@ public class PaintingToolEditor : EditorWindow
         Animationbutton.RegisterCallback<ClickEvent, Button>(SelectAnimation,Animationbutton);
         UpdateAnimationLayers();
         PainterScript.AddAnimation();
-        
+    }
+
+    private void DeleteAnimation(Button AnimationToDelete)
+    {
+
+    }
+    private void DeleteLayer(Button LayerToDelete)
+    {
+
+    }
+    private void SelectAnimationAndFrame(ClickEvent click,Button button)
+    {
+        foreach (ScrollView LayerFrame in AnimationList.Query<ScrollView>("Layers").ToList())
+        {
+            if (LayerFrame.Contains(button))
+            {
+                PainterScript.UpdateSelectedLayer(LayerFrame.IndexOf(button));
+                PainterScript.UpdateSelectedAnimation(AnimationList.IndexOf(LayerFrame.parent.parent.parent));
+                break;
+            }
+        }
     }
     private void UpdateAnimationLayers()
     {
-        foreach(ScrollView LayerData in AnimationList.Query<ScrollView>().ToList())
+        foreach(ScrollView LayerData in AnimationList.Query<ScrollView>("Layers").ToList())
         { 
              while (LayerData.childCount < LayerList.childCount-1)
              {
                 Button NewButton = new Button();
+                NewButton.name = "AnimationLayer";
+                NewButton.AddToClassList("layerButton");
                 LayerData.Add(NewButton);
+                NewButton.RegisterCallback<ClickEvent,Button>(SelectAnimationAndFrame,NewButton);
                 NewButton.text = (LayerData.IndexOf(NewButton)+1).ToString();
              }
         }
@@ -244,15 +291,12 @@ public class PaintingToolEditor : EditorWindow
         if (index >= 0 && index < PainterScript.CanvasImage[0].Count)
         {
             PainterScript.UpdateSelectedLayer(index);
-            LayerButton.style.backgroundColor = Color.red;
-            //LayerButton.text = index.ToString();
         }
     }
     private void SelectAnimation(ClickEvent Clicked,Button AnimationButton)
     {
         int index = AnimationList.IndexOf(AnimationButton.parent.parent.parent);
-        AnimationButton.style.backgroundColor = Color.red;
-        AnimationButton.text = index.ToString();
+
         if (index >= 0)
         {
             PainterScript.UpdateSelectedAnimation(index);
@@ -310,6 +354,72 @@ public class PaintingToolEditor : EditorWindow
         root.Q<ColorField>("SecondaryColour").value = SecondaryColor;
 
         ChangeColour();
+    }
+
+    private void UpdateColour()
+    {
+        if (PainterScript == null)
+        {
+            return;
+        }
+        PrimaryColor = PainterScript.SelectedColour;
+        VisualElement root = rootVisualElement;
+        root.Q<ColorField>("PrimaryColour").value = PrimaryColor;
+    }
+
+    private void UpdateLayerButtons()
+    {
+        foreach (Button button in LayerList.Query<Button>("LayerButton").ToList())
+        {
+            if (LayerList.IndexOf(button.parent.parent) == PainterScript.SelectedLayer)
+            {
+                button.AddToClassList("layerButtonSelected");
+                button.RemoveFromClassList("layerButton");
+            }
+            else if (button.ClassListContains("layerButtonSelected"))
+            {
+                button.AddToClassList("layerButton");
+                button.RemoveFromClassList("layerButtonSelected");
+            }
+        }
+        UpdateFrameLayers();
+
+    }
+    private void UpdateFrameLayers()
+    {
+        foreach (ScrollView Layers in AnimationList.Query<ScrollView>("Layers").ToList())
+        {
+            foreach (Button LayerButton in Layers.Query<Button>("AnimationLayer").ToList())
+            {
+                if (Layers.IndexOf(LayerButton) == PainterScript.SelectedLayer && AnimationList.IndexOf(Layers.parent.parent.parent) == PainterScript.SelectedAnimation)
+                {
+                    LayerButton.AddToClassList("layerButtonSelected");
+                    LayerButton.RemoveFromClassList("layerButton");
+                }
+                else if (LayerButton.ClassListContains("layerButtonSelected"))
+                {
+                    LayerButton.AddToClassList("layerButton");
+                    LayerButton.RemoveFromClassList("layerButtonSelected");
+                }
+            }
+        }
+    }
+    private void UpdateAnimationButtons()
+    {
+        UpdateFrameLayers();
+        foreach (Button AnimationButton in AnimationList.Query<Button>("AnimationButton").ToList())
+        {
+            if (AnimationList.IndexOf(AnimationButton.parent.parent.parent) == PainterScript.SelectedAnimation)
+            {
+                AnimationButton.AddToClassList("layerButtonSelected");
+                AnimationButton.RemoveFromClassList("layerButton");
+            }
+            else if (AnimationButton.ClassListContains("layerButtonSelected"))
+            {
+                AnimationButton.AddToClassList("layerButton");
+                AnimationButton.RemoveFromClassList("layerButtonSelected");
+            }
+        }
     }
     public void ExportImage()
     {

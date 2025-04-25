@@ -14,10 +14,10 @@
         <engine:VisualElement name="BottomContainer" style="flex-grow: 1; flex-direction: row; height: 90%;">
             <engine:VisualElement name="LeftContainer" style="flex-grow: 1; width: 5%;">
                 <engine:VisualElement name="LeftTopContainer" style="flex-grow: 1; width: 100%; align-self: flex-start; flex-wrap: wrap; flex-direction: row; height: 80%;" />
-                <engine:VisualElement name="LeftBottomContainer" style="flex-grow: 1; flex-wrap: wrap; flex-direction: column; height: 20%; align-self: center; justify-content: flex-start; align-content: auto; align-items: stretch;">
-                    <engine:VisualElement name="HigherContainer" style="flex-grow: 1; align-items: stretch; align-self: stretch; flex-direction: row; flex-wrap: wrap; height: 65%;">
-                        <editor:ColorField value="#000000FF" show-eye-dropper="false" show-alpha="true" name="PrimaryColour" hdr="false" usage-hints="DynamicColor" class="ColourField" />
-                        <editor:ColorField value="#FFFFFFFF" enabled="true" show-eye-dropper="false" show-alpha="true" name="SecondaryColour" class="ColourField" />
+                <engine:VisualElement name="LeftBottomContainer" style="flex-grow: 1; flex-wrap: nowrap; flex-direction: column; height: 20%; align-self: center; justify-content: flex-start; align-content: auto; align-items: stretch;">
+                    <engine:VisualElement name="HigherContainer" style="flex-grow: 1; align-items: flex-start; align-self: stretch; flex-direction: column; flex-wrap: nowrap; height: 65%; justify-content: flex-start; align-content: auto;">
+                        <editor:ColorField value="#000000FF" show-eye-dropper="false" show-alpha="true" name="PrimaryColour" hdr="false" usage-hints="DynamicColor" class="ColourField" style="width: 30px; height: 30px;" />
+                        <editor:ColorField value="#FFFFFFFF" enabled="true" show-eye-dropper="false" show-alpha="true" name="SecondaryColour" class="ColourField" style="width: 25px; height: 25px; justify-content: center;" />
                     </engine:VisualElement>
                     <engine:VisualElement name="LowerContainer" style="flex-grow: 1; align-self: stretch; align-content: flex-end; align-items: auto; height: 35%;">
                         <engine:Button text="Swap" name="SwapButton" style="align-self: stretch; align-items: center; justify-content: flex-end;" />
@@ -42,12 +42,12 @@
                         <engine:VisualElement name="LayerInfoContainer" style="flex-grow: 1; width: 20%; height: 100%; align-self: stretch; align-content: stretch;">
                             <engine:Label text="Layers" name="Label" style="height: 10%; font-size: 15px; -unity-text-align: lower-center; align-self: stretch; align-items: flex-start; flex-direction: column; top: auto; bottom: auto; -unity-font-style: bold;" />
                             <engine:ScrollView name="LayerList" horizontal-scroller-visibility="Hidden" style="height: 100%; overflow: hidden; align-self: stretch; justify-content: flex-start; flex-direction: column; align-content: stretch; -unity-text-align: upper-center;">
-                                <engine:Button text="+" name="AddLayerButton" style="align-self: center; justify-content: flex-end; height: 20%; width: 50%; flex-direction: column;" />
+                                <engine:Button text="+" name="AddLayerButton" style="align-self: center; justify-content: flex-end; height: 15px; width: 50%; flex-direction: column;" />
                             </engine:ScrollView>
                         </engine:VisualElement>
                         <engine:VisualElement name="AnimationInfoContainer" style="flex-grow: 1; width: 75%; flex-direction: row; align-self: stretch;">
                             <engine:ScrollView mode="Horizontal" name="AnimationList" style="flex-direction: row;">
-                                <engine:Button text="+" name="AddAnimationButton" style="align-self: flex-start; width: 20px; height: 15%; flex-direction: row;" />
+                                <engine:Button text="+" name="AddAnimationButton" style="align-self: flex-start; width: 20px; height: 20px; flex-direction: row;" />
                             </engine:ScrollView>
                         </engine:VisualElement>
                     </engine:VisualElement>

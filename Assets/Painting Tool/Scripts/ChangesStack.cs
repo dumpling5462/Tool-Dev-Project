@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 
 public class ChangesStack
 {
@@ -6,6 +7,9 @@ public class ChangesStack
         public int SelectedAnim;
         public int SelectedLayer;
         public PaintingToolScript.PaintLayer layer;
+        public List<PaintingToolScript.PaintLayer>? Frame;
+        public List<PaintingToolScript.PaintLayer>? Layers;
+        public bool Delete;
     }
 
     protected int topPointer;
