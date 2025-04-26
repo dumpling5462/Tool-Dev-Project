@@ -13,7 +13,7 @@ public class UndoRedoChangeStack : ChangesStack
     public override void push(Changes change)
     {
         Redo.nullStack();
-        base.push(change);     
+        base.push(change);    
     }
     public void pushRedo(Changes change)
     {
@@ -23,9 +23,10 @@ public class UndoRedoChangeStack : ChangesStack
     public override Changes? pop(Changes? oldState)
     {
         Changes? change = base.pop(null);
-        if (change != null && oldState != null)
+        if (change != null /*&& oldState != null*/)
         {
-            pushRedo((Changes)oldState);
+            //pushRedo((Changes)oldState);
+            pushRedo(change.Value);
         }
         return change;
     }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Unity.VisualScripting;
+using UnityEditor;
 using UnityEngine;
 
 public class PaintingToolScript
@@ -44,8 +45,10 @@ public class PaintingToolScript
     private readonly int Stacksize = 24;
     private UndoRedoChangeStack UndoRedoStack;
 
+    private bool firstUndo = true;
     private ChangesStack.Changes? StoredUndoChange;
-    private ChangesStack.Changes? StoredRedoChange;
+
+    private bool IsPerformingUndoRedo = false;
 
     public void Initialize(int width, int height)
     {
@@ -73,6 +76,10 @@ public class PaintingToolScript
             }
         }
         CanvasImage.Add(Animation);
+        if (!IsPerformingUndoRedo && CanvasImage.Count > 1)
+        {
+            AddedMade(0, CanvasImage.Count - 1);
+        }
     }
     public void AddLayer(string name)
     {
@@ -85,6 +92,10 @@ public class PaintingToolScript
             layer.LayerImage.filterMode = FilterMode.Point;
             FillTexture2D(layer.LayerImage);
             Frame.Add(layer);
+        }
+        if (!IsPerformingUndoRedo && CanvasImage[SelectedAnimation].Count > 1)
+        {
+            AddedMade(CanvasImage[0].Count-1,-1);
         }
     }
     public void RemoveLayer(int ID)
@@ -99,7 +110,7 @@ public class PaintingToolScript
         }
         if (SelectedLayer == ID)
         {
-            SelectedLayer = 0;
+            UpdateSelectedLayer(0,true);
         }
         UpdateDisplayImage();
     }
@@ -112,7 +123,8 @@ public class PaintingToolScript
         CanvasImage.RemoveAt(ID);
         if (SelectedAnimation == ID)
         {
-            SelectedAnimation = 0;
+            UpdateSelectedAnimation(0, true);
+            UpdateSelectedLayer(0,true);
         }
         UpdateDisplayImage();
     }
@@ -229,10 +241,18 @@ public class PaintingToolScript
 
     public void Undo()
     {
-        ChangesStack.Changes? CurrentChange = null;
-        if (StoredRedoChange != null)
+        if (!UndoRedoStack.isEmpty())
         {
-            CurrentChange = UndoRedoStack.pop(StoredRedoChange);
+        IsPerformingUndoRedo = true;
+        ChangesStack.Changes? CurrentChange = null;
+            if (firstUndo)
+            {
+                UndoRedoStack.Redo.push(GetChange());
+                firstUndo = false;
+            }
+        if (StoredUndoChange != null)
+        {
+            CurrentChange = UndoRedoStack.pop(StoredUndoChange);
         }
         else
         {
@@ -243,29 +263,31 @@ public class PaintingToolScript
         {
             ApplyChange((ChangesStack.Changes)CurrentChange,false);
         }
+        IsPerformingUndoRedo = false;
+        }
     }
     public void Redo()
     {
-        //if (UndoRedoStack.getPointer() > 1)
+        if (!UndoRedoStack.Redo.isEmpty())
         {
-            if (StoredUndoChange == null)
-            {
-                UndoRedoStack.pushRedo(GetChange());
-            }
-            else
-            {
-                UndoRedoStack.pushRedo((ChangesStack.Changes)StoredUndoChange);
-            }
-        }
-        ChangesStack.Changes? CurrentChange = UndoRedoStack.Redopop();
-        StoredRedoChange = CurrentChange;
+        IsPerformingUndoRedo = true;
+            ChangesStack.Changes? CurrentChange = UndoRedoStack.Redopop();
+            UndoRedoStack.Redopush(CurrentChange.Value);
         if (CurrentChange != null)
         {
             ApplyChange((ChangesStack.Changes)CurrentChange,true);
         }
+        IsPerformingUndoRedo = false;
+        }
     }
     public void ChangeMade()
     {
+        UnityEngine.Debug.Log("ChangeMade");
+        if (IsPerformingUndoRedo)
+        {
+            return;
+        }
+        StoredUndoChange = null;
         UndoRedoStack.push(GetChange());
     }
     private ChangesStack.Changes GetChange()
@@ -275,14 +297,10 @@ public class PaintingToolScript
         NewChange.SelectedLayer = SelectedLayer;
         NewChange.SelectedAnim = SelectedAnimation;
         PaintLayer ChangedLayer;
+        Color[] pixels = CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.GetPixels();
         Texture2D tex = new Texture2D(CanvasWidth, CanvasHeight);
-        for (int y = 0; y < CanvasHeight; y++)
-        {
-            for (int x = 0; x < CanvasWidth; x++)
-            {
-                tex.SetPixel(x, y, CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.GetPixel(x, y));
-            }
-        }
+        tex.SetPixels(pixels);
+        tex.Apply();
         ChangedLayer.LayerImage = tex;
         ChangedLayer.LayerName = CanvasImage[SelectedAnimation][SelectedLayer].LayerName;
         ChangedLayer.LayerVisible = CanvasImage[SelectedAnimation][SelectedLayer].LayerVisible;
@@ -299,10 +317,40 @@ public class PaintingToolScript
         {
             CanvasImage[change.SelectedAnim][change.SelectedLayer] = change.layer;
             if (change.SelectedLayer != SelectedLayer)
-                UpdateSelectedLayer(change.SelectedLayer);
+                UpdateSelectedLayer(change.SelectedLayer, true);
             if (change.SelectedAnim != SelectedAnimation)
-                UpdateSelectedAnimation(change.SelectedAnim);
+                UpdateSelectedAnimation(change.SelectedAnim, true);
             UpdateDisplayImage();
+        }
+        else if (change.Added)
+        {
+            if (redo)
+            {
+                if (change.SelectedAnim != -1)
+                {
+                    AddedAnimation(change.SelectedAnim);
+                    AddAnimation();
+                }
+                else
+                {
+                    AddedLayer(change.SelectedLayer, change.layer);
+                    AddLayer(change.layer.LayerName);
+                }
+            }
+            else
+            {
+                if (change.SelectedAnim != -1)
+                {
+                    RemoveAnimation(change.SelectedAnim);
+                    RemovedAnimation(change.SelectedAnim);
+                }
+                else
+                {
+                    UnityEngine.Debug.Log("Add");
+                    RemoveLayer(change.SelectedLayer);
+                    RemovedLayer(change.SelectedLayer);
+                }
+            }
         }
         else if (!redo)
         {
@@ -318,11 +366,15 @@ public class PaintingToolScript
             else
             {
                 //load layers
+                if (change.Layers.Count > 0)
+                {
                 AddedLayer(change.SelectedLayer, change.Layers[0]);
+                    int num = 0;
                 foreach (List<PaintLayer> Frame in CanvasImage)
                 {
-                    Frame.Insert(change.SelectedLayer, change.Layers[0]);
-                    change.Layers.RemoveAt(0);
+                    Frame.Insert(change.SelectedLayer, change.Layers[num]);
+                        num++;
+                }
                 }
             }
         }
@@ -332,8 +384,9 @@ public class PaintingToolScript
             if (change.Frame != null)
             {
                 //Delete Animation
-                CanvasImage.RemoveAt(change.SelectedAnim);
                 RemovedAnimation(change.SelectedAnim);
+                if (CanvasImage.Count >  change.SelectedAnim)
+                    CanvasImage.RemoveAt(change.SelectedAnim);
             }
             else
             {
@@ -341,6 +394,7 @@ public class PaintingToolScript
                 RemovedLayer(change.SelectedLayer);
                 foreach (List<PaintLayer> Frame in CanvasImage)
                 {
+                    if (Frame.Count > change.SelectedLayer)
                     Frame.RemoveAt(change.SelectedLayer);
                 }
             }
@@ -363,8 +417,11 @@ public class PaintingToolScript
         LayerRemoved?.Invoke(index);
     }
 
-    public void UpdateSelectedLayer(int NewLayerIndex)
+    public void UpdateSelectedLayer(int NewLayerIndex, bool? dochange)
     {
+        if (dochange != null)
+            if (!dochange.Value)
+                ChangeMade();
         if (NewLayerIndex >= CanvasImage[SelectedAnimation].Count || NewLayerIndex < 0 || NewLayerIndex == SelectedLayer)
             return;
         SelectedLayer = NewLayerIndex;
@@ -372,9 +429,11 @@ public class PaintingToolScript
         UnityEngine.Debug.Log("Layer :" + SelectedLayer);
     }
 
-    public void UpdateSelectedAnimation(int NewAnimationIndex)
+    public void UpdateSelectedAnimation(int NewAnimationIndex,bool? dochange)
     {
-        ChangeMade();
+        if (dochange!= null)
+            if (!dochange.Value)
+            ChangeMade();
         if (NewAnimationIndex >= CanvasImage.Count || NewAnimationIndex < 0 || NewAnimationIndex == SelectedAnimation)
             return;
         SelectedAnimation = NewAnimationIndex;
@@ -415,10 +474,10 @@ public class PaintingToolScript
         {
             Frame.RemoveAt(LayerIndex);
         }
-        if (SelectedLayer == LayerIndex)
-        {
-            UpdateSelectedLayer(0);
-        }
+        
+            UpdateSelectedLayer(0,true);
+        
+        UpdateDisplayImage();
         return true;
     }
     public bool DeleteAnimation(int AnimationIndex)
@@ -427,17 +486,20 @@ public class PaintingToolScript
             return false;
         DeleteMade(0,AnimationIndex);
         CanvasImage.RemoveAt(AnimationIndex);
-        if (SelectedAnimation == AnimationIndex)
-        {
-            UpdateSelectedAnimation(0);
-        }
+      
+        UpdateSelectedAnimation(0,true);
+        UpdateSelectedLayer(0,true);
+        
+        UpdateDisplayImage();
 
         return true;
     }
 
     public void DeleteMade(int LayerIndex,int AnimationIndex)
     {
-        ChangesStack.Changes DeleteChange;
+        if (IsPerformingUndoRedo)
+            return;
+            ChangesStack.Changes DeleteChange;
         DeleteChange = new ChangesStack.Changes();
         DeleteChange.Delete = true;
         if (AnimationIndex > -1)
@@ -455,6 +517,88 @@ public class PaintingToolScript
             }
         }
 
-        UndoRedoStack.Redopush(DeleteChange);
+        UndoRedoStack.push(DeleteChange);
+    }
+    public void AddedMade(int LayerIndex, int AnimationIndex)
+    {
+        return;
+        if (IsPerformingUndoRedo)
+            return;
+        ChangesStack.Changes AddedChange;
+        AddedChange = new ChangesStack.Changes();
+        AddedChange.Added = true;
+        if (AnimationIndex > -1)
+        {
+            AddedChange.SelectedAnim = AnimationIndex;
+            AddedChange.layer.LayerName = "";
+        }
+        else
+        {
+            AddedChange.layer = CanvasImage[0][LayerIndex];
+            AddedChange.SelectedLayer = LayerIndex;
+        }
+
+        UndoRedoStack.push(AddedChange);
+    }
+
+    public bool MoveLayerUp(int index)
+    {
+        if (index < 1 || CanvasImage[0].Count <= 1)
+        {
+        UnityEngine.Debug.Log("up " + index);
+            return false;
+        }
+        foreach (List<PaintLayer> Layers in CanvasImage)
+        {
+            PaintLayer LayerToMove = Layers[index];
+            Layers.RemoveAt(index);
+            Layers.Insert(index-1, LayerToMove);
+        }
+        UpdateDisplayImage();
+        return true;
+    }
+    public bool MoveLayerDown(int index)
+    {
+        if (index >= CanvasImage[0].Count-1 || CanvasImage[0].Count <= 1)
+        {
+            UnityEngine.Debug.Log("down " + index);
+            return false;
+        }
+        foreach (List<PaintLayer> Layers in CanvasImage)
+        {
+            PaintLayer LayerToMove = Layers[index];
+            Layers.RemoveAt(index);
+            Layers.Insert(index + 1, LayerToMove);
+        }
+        UpdateDisplayImage();
+        return true;
+    }
+    public bool MoveAnimationUp(int index)
+    {
+        if (index < 1 || CanvasImage.Count <= 1)
+        {
+            return false;
+        }
+        
+        List<PaintLayer> FrameToMove = CanvasImage[index];
+        CanvasImage.RemoveAt(index);
+        CanvasImage.Insert(index-1, FrameToMove);
+
+        UpdateDisplayImage();
+        return true;
+    }
+    public bool MoveAnimationDown(int index)
+    {
+        if (index == CanvasImage.Count - 1 || CanvasImage.Count <= 1)
+        {
+            return false;
+        }
+
+        List<PaintLayer> FrameToMove = CanvasImage[index];
+        CanvasImage.RemoveAt(index);
+        CanvasImage.Insert(index + 1, FrameToMove);
+
+        UpdateDisplayImage();
+        return true;
     }
 }

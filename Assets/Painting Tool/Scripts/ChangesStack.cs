@@ -10,6 +10,7 @@ public class ChangesStack
         public List<PaintingToolScript.PaintLayer>? Frame;
         public List<PaintingToolScript.PaintLayer>? Layers;
         public bool Delete;
+        public bool Added;
     }
 
     protected int topPointer;
@@ -78,6 +79,10 @@ public class ChangesStack
     //when changes at limit overwrites the bottom item of the stack
     private void HandleFullStack(Changes change)
     {
+        if (changeStack[0].layer.LayerImage != null)
+            UnityEngine.Object.DestroyImmediate(changeStack[0].layer.LayerImage);
+
+        changeStack[0] = new Changes();
         for (int i = 1; i < changeStack.Length; i++)
         {
             changeStack[i-1] = changeStack[i];
@@ -89,6 +94,14 @@ public class ChangesStack
     //resets stack reference
     public void nullStack()
     {
+        for (int i = 0; i < changeStack.Length; i++)
+        {
+            if (changeStack[i].layer.LayerImage != null)
+            {
+                //UnityEngine.Object.DestroyImmediate(changeStack[i].layer.LayerImage);
+            }
+            changeStack[i] = new Changes();
+        }
         topPointer = 0;
     }
     public int getPointer()
