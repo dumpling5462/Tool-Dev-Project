@@ -3,8 +3,6 @@ using UnityEditor;
 using UnityEngine.UIElements;
 using UnityEditor.ShortcutManagement;
 using UnityEditor.UIElements;
-using UnityEngine.Rendering;
-using static UnityEditor.Experimental.GraphView.GraphView;
 public class PaintingToolEditor : EditorWindow
 {
     private PaintingToolScript PainterScript;
@@ -124,10 +122,31 @@ public class PaintingToolEditor : EditorWindow
         PainterScript.LayerAdded += AddLayerAtIndex;
         PainterScript.LayerRemoved += RemoveLayerAtIndex;
 
+        PainterScript.NameChange += LayerNameChange;
+        PainterScript.VisibiltyChange += LayerVisibiltyChange;
+
+        PainterScript.LayerMoved += MovedLayer;
         AddAnimation();
         AddLayer();
         UpdateAnimationButtons();
         UpdateLayerButtons();
+    }
+    private void MovedLayer(int OldIndex,int newIndex)
+    {
+        VisualElement Layer = LayerList.Query<VisualElement>("Layer").ToList()[OldIndex];
+        LayerList.RemoveAt(OldIndex);
+        LayerList.Insert(newIndex,Layer);
+        Debug.Log(OldIndex + " " + newIndex + " " + LayerList.IndexOf(Layer));
+        UpdateLayerButtons();
+
+    }
+    private void LayerVisibiltyChange(int index, bool visibilty)
+    {
+        LayerList[index].Q<Toggle>("Toggle").value = visibilty;
+    }
+    private void LayerNameChange(int index, string name)
+    {
+        LayerList[index].Q<Button>("LayerButton").text = name;
     }
 
     private void UpdateDisplayImage()
@@ -247,6 +266,10 @@ public class PaintingToolEditor : EditorWindow
         Animationbutton.RegisterCallback<ClickEvent, Button>(SelectAnimation,Animationbutton);
         Button DeleteButton = Frame.Q<Button>("DeleteButton");
         DeleteButton.RegisterCallback<ClickEvent, Button>(DeleteAnimation, DeleteButton);
+        Button LeftButton = Frame.Q<Button>("LeftButton");
+        LeftButton.RegisterCallback<ClickEvent, Button>(MoveAnimation,LeftButton);
+        Button RightButton = Frame.Q<Button>("RightButton");
+        RightButton.RegisterCallback<ClickEvent, Button>(MoveAnimation,RightButton);
         UpdateAnimationLayers();
         PainterScript.AddAnimation();
     }
@@ -548,10 +571,11 @@ public class PaintingToolEditor : EditorWindow
                 LayerList.Insert(LayerIndex + 1, LayerToMove);
             }
         }
+        UpdateLayerButtons();
     }
     private void MoveAnimation(ClickEvent click, Button button)
     {
-        if (button.text == "Left")
+        if (button.name == "LeftButton")
         {
             if (PainterScript.MoveAnimationUp(AnimationList.IndexOf(button.parent.parent.parent)))
             {
@@ -561,7 +585,7 @@ public class PaintingToolEditor : EditorWindow
                 AnimationList.Insert(AnimationIndex - 1, AnimationToMove);
             }
         }
-        else if (button.text == "Right")
+        else if (button.name == "RightButton")
         {
             if (PainterScript.MoveAnimationDown(AnimationList.IndexOf(button.parent.parent.parent)))
             {
@@ -571,6 +595,7 @@ public class PaintingToolEditor : EditorWindow
                 AnimationList.Insert(AnimationIndex + 1, AnimationToMove);
             }
         }
+        UpdateAnimationButtons();
     }
     public void ExportImage()
     {

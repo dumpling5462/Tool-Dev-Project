@@ -11,6 +11,9 @@ public class ChangesStack
         public List<PaintingToolScript.PaintLayer>? Layers;
         public bool Delete;
         public bool Added;
+        public bool Move;
+        public int NewIndex;
+        public int OldIndex;
     }
 
     protected int topPointer;

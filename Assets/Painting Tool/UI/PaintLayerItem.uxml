@@ -5,12 +5,12 @@
         <engine:Button text="Layer" name="LayerButton" class="layerButton" style="width: 70%;" />
         <engine:VisualElement name="SideButtons" style="flex-grow: 1; flex-direction: row; height: 100%; width: 25%;">
             <engine:VisualElement name="LeftButtonContainer" class="LayerButtonStyle" style="flex-grow: 1; flex-direction: column; width: 100px; height: 100%; align-self: flex-start; align-content: stretch;">
-                <engine:Button text="Rename&#10;" name="RenameButton" class="layerButton" style="width: 95%; align-self: auto; height: 45%;" />
-                <engine:Button text="Delete" name="DeleteButton" class="layerButton" style="width: 95%; height: 45%;" />
+                <engine:Button text="R" name="RenameButton" class="layerButton" style="width: 95%; align-self: auto; height: 45%;" />
+                <engine:Button text="X" name="DeleteButton" class="layerButton" style="width: 95%; height: 45%; -unity-font-style: bold;" />
             </engine:VisualElement>
             <engine:VisualElement name="RightButtonContainer" style="flex-grow: 1; width: 100%; height: 100%; align-self: flex-start; justify-content: flex-start; align-content: stretch;">
-                <engine:Button text="Up&#10;" name="UpButton" class="LayerButtonStyle layerButton" style="height: 45%; width: 95%;" />
-                <engine:Button text="Down" name="DownButton" class="LayerButtonStyle layerButton" style="height: 45%; width: 95%;" />
+                <engine:Button text="^" name="UpButton" class="LayerButtonStyle layerButton" style="height: 45%; width: 95%;" />
+                <engine:Button text="v" name="DownButton" class="LayerButtonStyle layerButton" style="height: 45%; width: 95%;" />
             </engine:VisualElement>
         </engine:VisualElement>
     </engine:VisualElement>
