@@ -3,6 +3,8 @@ using UnityEditor;
 using UnityEngine.UIElements;
 using UnityEditor.ShortcutManagement;
 using UnityEditor.UIElements;
+using UnityEngine.Rendering;
+using static UnityEditor.Experimental.GraphView.GraphView;
 public class PaintingToolEditor : EditorWindow
 {
     private PaintingToolScript PainterScript;
@@ -116,6 +118,11 @@ public class PaintingToolEditor : EditorWindow
         PainterScript.ColourChange += UpdateColour;
         PainterScript.LayerSelected += UpdateLayerButtons;
         PainterScript.AnimationSelected += UpdateAnimationButtons;
+
+        PainterScript.AnimationAdded += AddAnimationAtIndex;
+        PainterScript.AnimationRemoved += RemoveAnimationAtIndex;
+        PainterScript.LayerAdded += AddLayerAtIndex;
+        PainterScript.LayerRemoved += RemoveLayerAtIndex;
 
         AddAnimation();
         AddLayer();
@@ -237,17 +244,73 @@ public class PaintingToolEditor : EditorWindow
         Button Animationbutton = Frame.Q<Button>("AnimationButton");
         Animationbutton.text = (AnimationList.IndexOf(Frame)+1).ToString();
         Animationbutton.RegisterCallback<ClickEvent, Button>(SelectAnimation,Animationbutton);
+        Button DeleteButton = Frame.Q<Button>("DeleteButton");
+        DeleteButton.RegisterCallback<ClickEvent, Button>(DeleteAnimation, DeleteButton);
         UpdateAnimationLayers();
         PainterScript.AddAnimation();
     }
 
-    private void DeleteAnimation(Button AnimationToDelete)
+    private void AddAnimationAtIndex(int index)
     {
+        VisualTreeAsset AnimationInfo = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Painting Tool/UI/PaintAnimationItem.uxml");
+        VisualElement Frame = AnimationInfo.CloneTree();
+        AnimationList.Insert(AnimationList.childCount - 1, Frame);
 
+        Button Animationbutton = Frame.Q<Button>("AnimationButton");
+        Animationbutton.text = (AnimationList.IndexOf(Frame) + 1).ToString();
+        Animationbutton.RegisterCallback<ClickEvent, Button>(SelectAnimation, Animationbutton);
+        Button DeleteButton = Frame.Q<Button>("DeleteButton");
+        DeleteButton.RegisterCallback<ClickEvent, Button>(DeleteAnimation, DeleteButton);
+        UpdateAnimationLayers();
     }
-    private void DeleteLayer(Button LayerToDelete)
-    {
 
+    private void AddLayerAtIndex(int index,PaintingToolScript.PaintLayer LayerData)
+    {
+        VisualTreeAsset LayerInfo = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Painting Tool/UI/PaintLayerItem.uxml");
+        VisualElement Layer = LayerInfo.CloneTree();
+        LayerList.Insert(index, Layer);
+        Button LayerButton = Layer.Q<Button>("LayerButton");
+        LayerButton.text = (LayerData.LayerName);
+        LayerButton.RegisterCallback<ClickEvent, Button>(SelectLayer, LayerButton);
+        UpdateAnimationLayers();
+
+        Toggle ToggleButton = Layer.Q<Toggle>("Toggle");
+        ToggleButton.RegisterCallback<ClickEvent, Toggle>(ToggleVisibilty, ToggleButton);
+        Button DeleteButton = Layer.Q<Button>("DeleteButton");
+        DeleteButton.RegisterCallback<ClickEvent, Button>(DeleteLayer, DeleteButton);
+        if (!LayerData.LayerVisible)
+        {
+            ToggleButton.value = false;
+            ToggleVisibilty(null,ToggleButton);
+        }
+    }
+    private void RemoveLayerAtIndex(int index)
+    {
+        if (PainterScript.DeleteLayer(index))
+        {
+            LayerList.RemoveAt(index);
+            foreach (ScrollView FrameData in AnimationList.Query<ScrollView>("Layers").ToList())
+            {
+                FrameData.RemoveAt(FrameData.childCount-1);
+            }
+        }
+    }
+    private void RemoveAnimationAtIndex(int index)
+    {
+        if (PainterScript.DeleteAnimation(index))
+        {
+            AnimationList.RemoveAt(AnimationList.childCount-2);
+        }
+    }
+
+    private void DeleteAnimation(ClickEvent click,Button AnimationToDelete)
+    {
+        Debug.Log("Delete " + AnimationList.IndexOf(AnimationToDelete.parent.parent.parent));
+        RemoveAnimationAtIndex(AnimationList.IndexOf(AnimationToDelete.parent.parent.parent));
+    }
+    private void DeleteLayer(ClickEvent click,Button LayerToDelete)
+    {
+        RemoveLayerAtIndex(LayerList.IndexOf(LayerToDelete.parent.parent.parent.parent));
     }
     private void SelectAnimationAndFrame(ClickEvent click,Button button)
     {
@@ -319,6 +382,9 @@ public class PaintingToolEditor : EditorWindow
 
         Toggle ToggleButton = Layer.Q<Toggle>("Toggle");
         ToggleButton.RegisterCallback<ClickEvent, Toggle>(ToggleVisibilty, ToggleButton);
+
+        Button DeleteButton = Layer.Q<Button>("DeleteButton");
+        DeleteButton.RegisterCallback<ClickEvent, Button>(DeleteLayer,DeleteButton);
     }
     private void ChangeColour()
     {
@@ -337,7 +403,38 @@ public class PaintingToolEditor : EditorWindow
         }
         if (!paint)
             return;
-        PainterScript.PressedPixel((int)Event.current.mousePosition.x,(int)Event.current.mousePosition.y);
+
+        VisualElement root = rootVisualElement;
+        VisualElement Image = root.Q<VisualElement>("DisplayTexture");
+
+        Vector2 position = Clicked.position;
+
+        float x = position.x;
+        //////x -= Image.worldBound.xMin;
+        float y = position.y;
+        //////y -= Image.worldBound.yMin;
+
+        Vector2 maxBound = new Vector2(Image.worldBound.xMax,Image.worldBound.yMax);
+        Vector2 minBound = new Vector2(Image.worldBound.xMin, Image.worldBound.yMin);
+        float distance = maxBound.x - minBound.x;
+        float distance2 = maxBound.y - minBound.y;
+        x %= width; y %= height;
+        x *= distance/width;
+        y *= distance2/height;
+        
+
+
+        //Debug.Log(Image.worldBound.xMin + "  " + Image.worldBound.yMin + "   " + position);
+
+        //if (x >= width)
+        //    x /= width;
+        //if (y >= height)
+        //   y /= height;
+
+        // This is relative to the VisualElement
+
+
+        PainterScript.PressedPixel((int)x,(int)y);
     }
     private void SwapColour()
     {
@@ -440,5 +537,6 @@ public class PaintingToolEditor : EditorWindow
     private void MouseOut(MouseLeaveEvent mouse)
     {
         paint = false;
-    }       
+    }
+
 }

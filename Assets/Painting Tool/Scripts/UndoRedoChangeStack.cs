@@ -17,22 +17,22 @@ public class UndoRedoChangeStack : ChangesStack
     }
     public void pushRedo(Changes change)
     {
-        base.push(change);
+        Redo.push(change);
     }
 
     public override Changes? pop(Changes? oldState)
     {
-        Changes? change  = base.pop(null);
-        if (change != null)
+        Changes? change = base.pop(null);
+        if (change != null && oldState != null)
         {
-            Redopush((Changes)oldState);
+            pushRedo((Changes)oldState);
         }
         return change;
     }
 
     public void Redopush(Changes change)
     {
-        Redo.push(change);
+        base.push(change);
     }
 
     //returns the top item of the stack and decrements the top pointer

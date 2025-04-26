@@ -67,7 +67,7 @@ public class ChangesStack
     //checks if the stack is empty
     public bool isEmpty()
     {
-        return changeStack == null || topPointer == 0;
+        return changeStack == null || topPointer <= 0;
     }
     //checks to see if stack limit has been reached
     public bool IsFull()
@@ -90,5 +90,9 @@ public class ChangesStack
     public void nullStack()
     {
         topPointer = 0;
+    }
+    public int getPointer()
+    {
+        return topPointer;
     }
 }
