@@ -344,7 +344,15 @@ public class PaintingToolScript
                 }
                 NameChange?.Invoke(change.SelectedLayer, change.layer.LayerName);
             }
-            CanvasImage[change.SelectedAnim][change.SelectedLayer] = change.layer;
+
+            PaintLayer NewLayer;
+            NewLayer.LayerName = change.layer.LayerName;
+            NewLayer.LayerVisible = change.layer.LayerVisible;
+            Color[] colors = change.layer.LayerImage.GetPixels();
+            NewLayer.LayerImage = new Texture2D(CanvasWidth,CanvasHeight);
+            NewLayer.LayerImage.SetPixels(colors);
+            UnityEngine.Object.DestroyImmediate(CanvasImage[change.SelectedAnim][change.SelectedLayer].LayerImage);
+            CanvasImage[change.SelectedAnim][change.SelectedLayer] = NewLayer;
             if (change.SelectedLayer != SelectedLayer)
                 UpdateSelectedLayer(change.SelectedLayer, true);
             if (change.SelectedAnim != SelectedAnimation)
@@ -371,10 +379,20 @@ public class PaintingToolScript
             {
                 if (change.SelectedLayer == -1)
                 {
+                    foreach (PaintLayer layer in CanvasImage[change.SelectedAnim])
+                    {
+                        UnityEngine.Object.DestroyImmediate(layer.LayerImage);
+                    }
+                    CanvasImage.RemoveAt(change.SelectedAnim);
                     RemovedAnimation(change.SelectedAnim);
                 }
                 else
                 {
+                    foreach (List<PaintLayer> Frame in CanvasImage)
+                    {
+                        UnityEngine.Object.DestroyImmediate(Frame[change.SelectedLayer].LayerImage);
+                        Frame.RemoveAt(change.SelectedLayer);
+                    }
                     RemovedLayer(change.SelectedLayer);
                 }
             }
@@ -386,10 +404,23 @@ public class PaintingToolScript
                 if (change.Frame != null)
                 {
                     //load Animation
+                    List<PaintLayer> newFrame = new List<PaintLayer>();
+                    foreach (PaintLayer Layer in change.Frame)
+                    {
+                        PaintLayer LayerToAdd;
+                        LayerToAdd.LayerName = Layer.LayerName;
+                        LayerToAdd.LayerVisible = Layer.LayerVisible;
+                        Color[] Colors = Layer.LayerImage.GetPixels();
+                        LayerToAdd.LayerImage = new Texture2D(CanvasWidth, CanvasHeight);
+                        LayerToAdd.LayerImage.SetPixels(Colors);
+                        newFrame.Add(LayerToAdd);
+                    }
+
+
                     if (change.SelectedAnim < CanvasImage.Count)
-                        CanvasImage.Insert(change.SelectedAnim, change.Frame);
+                        CanvasImage.Insert(change.SelectedAnim, newFrame);
                     else
-                        CanvasImage.Add(change.Frame);
+                        CanvasImage.Add(newFrame);
                     AddedAnimation(change.SelectedAnim);
                 }
                 else
@@ -401,7 +432,13 @@ public class PaintingToolScript
                         int num = 0;
                         foreach (List<PaintLayer> Frame in CanvasImage)
                         {
-                            Frame.Insert(change.SelectedLayer, change.Layers[num]);
+                            PaintLayer newLayer;
+                            newLayer.LayerName = change.Layers[num].LayerName;
+                            newLayer.LayerVisible = change.Layers[num].LayerVisible;
+                            Color[] colors = change.Layers[num].LayerImage.GetPixels();
+                            newLayer.LayerImage = new Texture2D(CanvasWidth, CanvasHeight);
+                            newLayer.LayerImage.SetPixels(colors);
+                            Frame.Insert(change.SelectedLayer,newLayer);
                             num++;
                         }
                     }
@@ -414,7 +451,13 @@ public class PaintingToolScript
                     //Delete Animation
                     RemovedAnimation(change.SelectedAnim);
                     if (CanvasImage.Count >  change.SelectedAnim)
+                    {
+                        foreach (PaintLayer layer in CanvasImage[change.SelectedAnim])
+                        {
+                            UnityEngine.Object.DestroyImmediate(layer.LayerImage);
+                        }
                         CanvasImage.RemoveAt(change.SelectedAnim);
+                    }
                 }
                 else
                 {
@@ -423,7 +466,10 @@ public class PaintingToolScript
                     foreach (List<PaintLayer> Frame in CanvasImage)
                     {
                         if (Frame.Count > change.SelectedLayer)
-                        Frame.RemoveAt(change.SelectedLayer);
+                        {
+                            UnityEngine.Object.DestroyImmediate(Frame[change.SelectedLayer].LayerImage);
+                            Frame.RemoveAt(change.SelectedLayer);
+                        }
                     }
                 }
             }
@@ -557,6 +603,7 @@ public class PaintingToolScript
         DeleteMade(LayerIndex,-1);
         foreach (List<PaintLayer>Frame in CanvasImage)
         {
+            UnityEngine.Object.DestroyImmediate(Frame[LayerIndex].LayerImage);
             Frame.RemoveAt(LayerIndex);
         }
         
@@ -569,7 +616,12 @@ public class PaintingToolScript
     {
         if (CanvasImage.Count <= 1)
             return false;
-        DeleteMade(0,AnimationIndex);
+        DeleteMade(-1,AnimationIndex);
+        List<PaintLayer> Frame = CanvasImage[AnimationIndex];
+        foreach (PaintLayer layer in Frame)
+        {
+            UnityEngine.Object.DestroyImmediate(layer .LayerImage);
+        }
         CanvasImage.RemoveAt(AnimationIndex);
       
         UpdateSelectedAnimation(0,true);
@@ -589,7 +641,17 @@ public class PaintingToolScript
         DeleteChange.Delete = true;
         if (AnimationIndex > -1)
         {
-            DeleteChange.Frame = CanvasImage[AnimationIndex];
+            foreach (PaintLayer Layer in CanvasImage[AnimationIndex])
+            {
+                PaintLayer newLayer;
+                newLayer.LayerName = Layer.LayerName;
+                newLayer.LayerVisible = Layer.LayerVisible;
+                Color[] Colors = Layer.LayerImage.GetPixels();
+                newLayer.LayerImage = new Texture2D(CanvasWidth,CanvasHeight);
+                newLayer.LayerImage.SetPixels(Colors);
+
+                DeleteChange.Frame.Add(newLayer);
+            }
             DeleteChange.SelectedAnim = AnimationIndex;
         }
         else
@@ -598,7 +660,13 @@ public class PaintingToolScript
             DeleteChange.SelectedLayer = LayerIndex;
             foreach(List<PaintLayer> layerData in CanvasImage)
             {
-                DeleteChange.Layers.Add(layerData[LayerIndex]);
+                PaintLayer newLayer;
+                newLayer.LayerName = layerData[LayerIndex].LayerName;
+                newLayer.LayerVisible= layerData[LayerIndex].LayerVisible;
+                Color[] colors = layerData[LayerIndex].LayerImage.GetPixels();
+                newLayer.LayerImage = new Texture2D(CanvasWidth,CanvasHeight);
+                newLayer.LayerImage.SetPixels(colors);
+                DeleteChange.Layers.Add(newLayer);
             }
         }
 
@@ -646,9 +714,8 @@ public class PaintingToolScript
     }
     public bool MoveLayerDown(int index)
     {
-        if (index > 0||index >= CanvasImage[0].Count-1 || CanvasImage[0].Count <= 1)
+        if (index < 0||index >= CanvasImage[0].Count-1 || CanvasImage[0].Count <= 1)
         {
-            UnityEngine.Debug.Log("down " + index);
             return false;
         }
         foreach (List<PaintLayer> Layers in CanvasImage)

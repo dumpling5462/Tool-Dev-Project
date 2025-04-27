@@ -23,7 +23,13 @@ public class PaintingToolEditor : EditorWindow
     public static void ShowMenuWindow()
     {
         PaintingToolEditor window = GetWindow<PaintingToolEditor>();
-        window.titleContent = new GUIContent("Paint Hub");
+        window.titleContent = new GUIContent("Pain Hub");
+    }
+    [MenuItem("Unity Paint/Help")]
+    public static void ShowHelpWindow()
+    {
+        PaintingToolEditor window = GetWindow<PaintingToolEditor>();
+        window.titleContent = new GUIContent("Pls end my life");
     }
 
     public void CreateGUI()
@@ -34,7 +40,6 @@ public class PaintingToolEditor : EditorWindow
         StyleSheet sheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Painting Tool/UI/PaintMenuStyleSheet.uss");
         root.styleSheets.Add(sheet);
         root.Q<Button>("NewButton").clicked +=OpenCanvasSizeMenu;
-
     }
 
     private void OpenCanvasSizeMenu()
@@ -417,13 +422,12 @@ public class PaintingToolEditor : EditorWindow
 
     private void DeleteAnimation(ClickEvent click,Button AnimationToDelete)
     {
-        Debug.Log("Delete " + AnimationList.IndexOf(AnimationToDelete.parent.parent.parent));
-        RemoveAnimationAtIndex(AnimationList.IndexOf(AnimationToDelete.parent.parent.parent));
+        RemoveAnimationAtIndex(AnimationList.IndexOf(FindChild(AnimationList,AnimationToDelete)));
         UpdateAnimationButtons();
     }
     private void DeleteLayer(ClickEvent click,Button LayerToDelete)
     {
-        RemoveLayerAtIndex(LayerList.IndexOf(LayerToDelete.parent.parent.parent.parent));
+        RemoveLayerAtIndex(LayerList.IndexOf(FindChild(LayerList,LayerToDelete)));
         UpdateLayerButtons();
     }
     private void SelectAnimationAndFrame(ClickEvent click,Button button)
@@ -433,7 +437,7 @@ public class PaintingToolEditor : EditorWindow
             if (LayerFrame.Contains(button))
             {
                 PainterScript.UpdateSelectedLayer(LayerFrame.IndexOf(button),false);
-                PainterScript.UpdateSelectedAnimation(AnimationList.IndexOf(LayerFrame.parent.parent.parent),false);
+                PainterScript.UpdateSelectedAnimation(AnimationList.IndexOf(FindChild(AnimationList,LayerFrame)),false);
                 break;
             }
         }
@@ -456,7 +460,7 @@ public class PaintingToolEditor : EditorWindow
 
     private void ToggleVisibilty(ClickEvent clicked, Toggle ToggleButton)
     {
-        int index = LayerList.IndexOf(ToggleButton.parent.parent);
+        int index = LayerList.IndexOf(FindChild(LayerList, ToggleButton));
         UnityEngine.Debug.Log(index);
         PainterScript.UpdateVisibilty(index,ToggleButton.value);
         
@@ -464,7 +468,7 @@ public class PaintingToolEditor : EditorWindow
     }
     private void OpenRenameWindow(ClickEvent clicked,Button button)
     {
-        int index = LayerList.IndexOf(button.parent.parent.parent.parent);
+        int index = LayerList.IndexOf(FindChild(LayerList,button));
 
         VisualElement root = rootVisualElement;
 
@@ -499,7 +503,7 @@ public class PaintingToolEditor : EditorWindow
 
     private void SelectLayer(ClickEvent Clicked, Button LayerButton)
     {
-        int index = LayerList.IndexOf(LayerButton.parent.parent);
+        int index = LayerList.IndexOf(FindChild(LayerList,LayerButton));
         if (index >= 0 && index < PainterScript.CanvasImage[0].Count)
         {
             PainterScript.UpdateSelectedLayer(index, false);
@@ -507,7 +511,7 @@ public class PaintingToolEditor : EditorWindow
     }
     private void SelectAnimation(ClickEvent Clicked,Button AnimationButton)
     {
-        int index = AnimationList.IndexOf(AnimationButton.parent.parent.parent);
+        int index = AnimationList.IndexOf(FindChild(AnimationList,AnimationButton));
 
         if (index >= 0)
         {
@@ -626,7 +630,7 @@ public class PaintingToolEditor : EditorWindow
     {
         foreach (Button button in LayerList.Query<Button>("LayerButton").ToList())
         {
-            if (LayerList.IndexOf(button.parent.parent) == PainterScript.SelectedLayer)
+            if (LayerList.IndexOf(FindChild(LayerList,button)) == PainterScript.SelectedLayer)
             {
                 button.AddToClassList("layerButtonSelected");
                 button.RemoveFromClassList("layerButton");
@@ -646,7 +650,7 @@ public class PaintingToolEditor : EditorWindow
         {
             foreach (Button LayerButton in Layers.Query<Button>("AnimationLayer").ToList())
             {
-                if (Layers.IndexOf(LayerButton) == PainterScript.SelectedLayer && AnimationList.IndexOf(Layers.parent.parent.parent) == PainterScript.SelectedAnimation)
+                if (Layers.IndexOf(LayerButton) == PainterScript.SelectedLayer && AnimationList.IndexOf(FindChild(AnimationList,LayerButton)) == PainterScript.SelectedAnimation)
                 {
                     LayerButton.AddToClassList("layerButtonSelected");
                     LayerButton.RemoveFromClassList("layerButton");
@@ -664,7 +668,7 @@ public class PaintingToolEditor : EditorWindow
         UpdateFrameLayers();
         foreach (Button AnimationButton in AnimationList.Query<Button>("AnimationButton").ToList())
         {
-            if (AnimationList.IndexOf(AnimationButton.parent.parent.parent) == PainterScript.SelectedAnimation)
+            if (AnimationList.IndexOf(FindChild(AnimationList,AnimationButton)) == PainterScript.SelectedAnimation)
             {
                 AnimationButton.AddToClassList("layerButtonSelected");
                 AnimationButton.RemoveFromClassList("layerButton");
@@ -678,12 +682,12 @@ public class PaintingToolEditor : EditorWindow
     }
     private void MoveLayer(ClickEvent click, Button button)
     {
-        Debug.Log("Movement " + LayerList.IndexOf(button.parent.parent.parent.parent));
+        VisualElement OuterLayerElement = FindChild(LayerList,button);
         if (button.name == "UpButton")
         {
-            if (PainterScript.MoveLayerUp(LayerList.IndexOf(button.parent.parent.parent.parent)))
+            if (PainterScript.MoveLayerUp(LayerList.IndexOf(OuterLayerElement)))
             {
-                VisualElement LayerToMove = button.parent.parent.parent.parent;
+                VisualElement LayerToMove = OuterLayerElement;
                 int LayerIndex = LayerList.IndexOf(LayerToMove);
                 LayerList.Remove(LayerToMove);
                 LayerList.Insert(LayerIndex-1, LayerToMove);
@@ -691,9 +695,9 @@ public class PaintingToolEditor : EditorWindow
         }
         else if (button.name == "DownButton")
         {
-            if (PainterScript.MoveLayerDown(LayerList.IndexOf(button.parent.parent.parent.parent)))
+            if (PainterScript.MoveLayerDown(LayerList.IndexOf(OuterLayerElement)))
             {
-                VisualElement LayerToMove = button.parent.parent.parent.parent;
+                VisualElement LayerToMove = OuterLayerElement;
                 int LayerIndex = LayerList.IndexOf(LayerToMove);
                 LayerList.Remove(LayerToMove);
                 LayerList.Insert(LayerIndex + 1, LayerToMove);
@@ -701,26 +705,36 @@ public class PaintingToolEditor : EditorWindow
         }
         UpdateLayerButtons();
     }
+
+    private VisualElement FindChild(VisualElement parent, VisualElement childobject)
+    {
+        while (parent.IndexOf(childobject) == -1)
+        {
+            childobject = childobject.parent;
+        }
+        return childobject;
+    }
     private void MoveAnimation(ClickEvent click, Button button)
     {
+        VisualElement OuterAnimationElement = FindChild(AnimationList,button);
         if (button.name == "LeftButton")
         {
-            if (PainterScript.MoveAnimationUp(AnimationList.IndexOf(button.parent.parent.parent)))
+            if (PainterScript.MoveAnimationUp(AnimationList.IndexOf(OuterAnimationElement)))
             {
-                VisualElement AnimationToMove = button.parent.parent.parent;
-                int AnimationIndex = AnimationList.IndexOf(AnimationToMove);
-                AnimationList.Remove(AnimationToMove);
-                AnimationList.Insert(AnimationIndex - 1, AnimationToMove);
+                //VisualElement AnimationToMove = OuterAnimationElement;
+                //int AnimationIndex = AnimationList.IndexOf(AnimationToMove);
+                //AnimationList.Remove(AnimationToMove);
+                //AnimationList.Insert(AnimationIndex - 1, AnimationToMove);
             }
         }
         else if (button.name == "RightButton")
         {
-            if (PainterScript.MoveAnimationDown(AnimationList.IndexOf(button.parent.parent.parent)))
+            if (PainterScript.MoveAnimationDown(AnimationList.IndexOf(OuterAnimationElement)))
             {
-                VisualElement AnimationToMove = button.parent.parent.parent;
-                int AnimationIndex = LayerList.IndexOf(AnimationToMove);
-                AnimationList.Remove(AnimationToMove);
-                AnimationList.Insert(AnimationIndex + 1, AnimationToMove);
+                //VisualElement AnimationToMove = OuterAnimationElement;
+                //int AnimationIndex = LayerList.IndexOf(AnimationToMove);
+                //AnimationList.Remove(AnimationToMove);
+                //AnimationList.Insert(AnimationIndex + 1, AnimationToMove);
             }
         }
         UpdateAnimationButtons();

@@ -117,7 +117,7 @@ public class ChangesStack
         {
             if (changeStack[i].layer.LayerImage != null)
             {
-                //UnityEngine.Object.DestroyImmediate(changeStack[i].layer.LayerImage);
+                UnityEngine.Object.DestroyImmediate(changeStack[i].layer.LayerImage);
             }
             changeStack[i] = new Changes();
         }
