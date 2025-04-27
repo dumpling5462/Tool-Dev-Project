@@ -1,0 +1,12 @@
+<engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/Painting%20Tool/UI/PaintCanvasStyleSheet.uss?fileID=7433441132597879392&amp;guid=a82ae5771cd46f34f9d3a6e3b2dce9ee&amp;type=3#PaintCanvasStyleSheet" />
+    <engine:VisualElement name="PopupWindow" style="flex-grow: 1; align-self: stretch; align-items: stretch; width: 300px; height: 100px;">
+        <engine:VisualElement name="UpperContainer" style="flex-grow: 1; align-self: stretch; -unity-text-align: upper-center; justify-content: center; align-items: center;">
+            <engine:TextField label="&#10;" placeholder-text="Layer" name="NameField" style="align-self: center; justify-content: center; font-size: 14px; -unity-text-align: upper-center; align-content: center; align-items: stretch; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; flex-direction: column; width: 50%; height: 80%;" />
+        </engine:VisualElement>
+        <engine:VisualElement name="LowerContainer" style="flex-grow: 1; flex-direction: row; justify-content: center; align-self: stretch; align-content: center; align-items: center;">
+            <engine:Button text="Exit" name="ExitButton" class="renameButton" style="height: 20%; width: 30%; justify-content: flex-start; align-content: flex-end;" />
+            <engine:Button text="Confirm" name="ConfirmButton" class="renameButton" style="flex-direction: row; width: 30%; height: 20%;" />
+        </engine:VisualElement>
+    </engine:VisualElement>
+</engine:UXML>

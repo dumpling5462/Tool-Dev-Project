@@ -55,10 +55,10 @@
             </engine:VisualElement>
             <engine:VisualElement name="RightContainer" style="flex-grow: 1; width: 5%;">
                 <engine:VisualElement name="BrushContainer" style="flex-grow: 1; flex-direction: column; flex-wrap: nowrap; width: auto; height: auto; justify-content: flex-start; align-self: stretch; align-content: stretch; align-items: stretch;">
-                    <engine:Button text="Brush" name="BrushButton" class="button PaintToolbuttons" />
-                    <engine:Button text="Eraser" name="EraserButton" class="button PaintToolbuttons" />
-                    <engine:Button text="Eye Drop" name="EyeDropButton" class="PaintToolbuttons" />
-                    <engine:Button text="Fill" name="PaintBucketButton" class="PaintToolbuttons" />
+                    <engine:Button text="Brush" name="BrushButton" class="button PaintToolbuttons PaintToolbutton" />
+                    <engine:Button text="Eraser" name="EraserButton" class="button PaintToolbuttons PaintToolbutton" />
+                    <engine:Button text="Eye Drop" name="EyeDropButton" class="PaintToolbuttons PaintToolbutton" />
+                    <engine:Button text="Fill" name="PaintBucketButton" class="PaintToolbuttons PaintToolbutton" />
                 </engine:VisualElement>
             </engine:VisualElement>
         </engine:VisualElement>

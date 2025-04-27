@@ -714,4 +714,20 @@ public class PaintingToolScript
 
         UndoRedoStack.push(LayerChange);
     }
+
+    public void PasteLayer(Texture2D textureToPaste)
+    {
+        ChangeMade();
+        for (int y = 0; y < CanvasHeight; y++)
+        {
+            for (int x = 0; x < CanvasWidth; x++)
+            {
+                if (textureToPaste.GetPixel(x,y).a > 0)
+                {
+                    CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.SetPixel(x,y,textureToPaste.GetPixel(x,y));
+                }
+            }
+        }
+        UpdateDisplayImage();
+    }
 }

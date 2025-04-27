@@ -130,6 +130,7 @@ public class PaintingToolEditor : EditorWindow
         AddLayer();
         UpdateAnimationButtons();
         UpdateLayerButtons();
+        Brush();
     }
     private void MovedLayer(int OldIndex,int newIndex)
     {
@@ -160,7 +161,20 @@ public class PaintingToolEditor : EditorWindow
         Image.style.backgroundImage = new StyleBackground(DisplayImage);
     }
 
-    [Shortcut("b")]
+    private static PaintingToolEditor EditorReference;
+    private static void SetEditorReference()
+    {
+        if (EditorReference == null || EditorReference.Equals(null))
+        {
+            EditorReference = GetWindow<PaintingToolEditor>();
+        }
+    }
+    [Shortcut("Painting Tool/Brush", KeyCode.B)]
+    private static void BrushShortcut()
+    {
+        SetEditorReference();
+        EditorReference.Brush();
+    }
     private void Brush()
     {
         if (PainterScript == null)
@@ -170,7 +184,12 @@ public class PaintingToolEditor : EditorWindow
         PainterScript.SelectedBrush = PaintingToolScript.BrushMode.Paintbrush;
         UpdateVisual();
     }
-    [Shortcut("e")]
+    [Shortcut("Painting Tool/Eraser", KeyCode.H)]
+    private static void EraserShortcut()
+    {
+        SetEditorReference();
+        EditorReference.Eraser();
+    }
     private void Eraser()
     {
         if (PainterScript == null)
@@ -180,8 +199,13 @@ public class PaintingToolEditor : EditorWindow
         PainterScript.SelectedBrush = PaintingToolScript.BrushMode.Eraser;
         UpdateVisual();
     }
-    [Shortcut("g")]
-    private void PaintBucket()
+    [Shortcut("Painting Tool/Fill", KeyCode.G)]
+    private static void PaintBucketShortcut()
+    {
+       SetEditorReference();
+       EditorReference.PaintBucket();
+    }
+    public void PaintBucket()
     {
         if (PainterScript == null)
         {
@@ -190,7 +214,12 @@ public class PaintingToolEditor : EditorWindow
         PainterScript.SelectedBrush = PaintingToolScript.BrushMode.PaintBucket;
         UpdateVisual();
     }
-    [Shortcut("i")]
+    [Shortcut("Painting Tool/EyeDropper", KeyCode.I)]
+    private static void EyeDropperShortcut()
+    {
+        SetEditorReference();
+        EditorReference.EyeDropper();
+    }
     private void EyeDropper()
     {
         if (PainterScript == null)
@@ -207,19 +236,64 @@ public class PaintingToolEditor : EditorWindow
         {
             return;
         }
+
+        VisualElement root = rootVisualElement;
+        Button BrushButton = root.Q<Button>("BrushButton");
+        Button EraserButton = root.Q<Button>("EraserButton");
+        Button EyeDropperButton = root.Q<Button>("EyeDropButton");
+        Button PaintBucketButton = root.Q<Button>("PaintBucketButton");
+
+        SwapButtonStyle(BrushButton,false);
+        SwapButtonStyle(EraserButton,false);
+        SwapButtonStyle(EyeDropperButton,false);
+        SwapButtonStyle(PaintBucketButton,false);
+        
         switch (PainterScript.SelectedBrush)
         {
             case PaintingToolScript.BrushMode.Paintbrush:
+                SwapButtonStyle(BrushButton,true);
                 break;
             case PaintingToolScript.BrushMode.Eraser:
+                SwapButtonStyle(EraserButton,true);
                 break;
             case PaintingToolScript.BrushMode.PaintBucket:
+                SwapButtonStyle(PaintBucketButton,true);
                 break;
             case PaintingToolScript.BrushMode.Eyedropper:
+                SwapButtonStyle(EyeDropperButton,true);
                 break;
         }
     }
-    [Shortcut("+")]
+
+    private void SwapButtonStyle(Button Button, bool Swap)
+    {
+        if (Swap)
+        { 
+            if (Button.ClassListContains("PaintToolbutton"))
+            {
+                Button.RemoveFromClassList("PaintToolbutton");
+                Button.AddToClassList("PaintToolButtonSelected");
+            }
+        }
+        else
+        {
+            if (Button.ClassListContains("PaintToolButtonSelected"))
+            {
+                Button.RemoveFromClassList("PaintToolButtonSelected");
+                Button.AddToClassList("PaintToolbutton");
+            }
+        }
+    }
+
+
+    [Shortcut("Painting Tool/IncreaseBrush", KeyCode.Equals)]
+    [Shortcut("Painting Tool/IncreaseBrush 2", KeyCode.RightCurlyBracket)]
+    private static void IncreaseBrushSizeShortcut()
+    {
+        Debug.Log("Increase");
+        SetEditorReference();
+        EditorReference.IncreaseBrushSize();
+    }
     private void IncreaseBrushSize()
     {
         if (PainterScript == null)
@@ -227,9 +301,16 @@ public class PaintingToolEditor : EditorWindow
             return;
         }
     }
-    [Shortcut("-")]
+    [Shortcut("Painting Tool/DecreaseBrush", KeyCode.Minus)]
+    [Shortcut("Painting Tool/DecreaseBrush 2", KeyCode.LeftCurlyBracket)]
+    private static void DecreaseBrushSizeShortcut()
+    {
+        SetEditorReference();
+        EditorReference.DecreaseBrushSize();
+    }
     private void DecreaseBrushSize() 
     {
+        Debug.Log("Decrease");
         if (PainterScript == null)
         {  
             return; 
@@ -286,6 +367,7 @@ public class PaintingToolEditor : EditorWindow
         Button DeleteButton = Frame.Q<Button>("DeleteButton");
         DeleteButton.RegisterCallback<ClickEvent, Button>(DeleteAnimation, DeleteButton);
         UpdateAnimationLayers();
+        UpdateAnimationButtons();
     }
 
     private void AddLayerAtIndex(int index,PaintingToolScript.PaintLayer LayerData)
@@ -307,6 +389,7 @@ public class PaintingToolEditor : EditorWindow
             ToggleButton.value = false;
             ToggleVisibilty(null,ToggleButton);
         }
+        UpdateLayerButtons();
     }
     private void RemoveLayerAtIndex(int index)
     {
@@ -318,6 +401,7 @@ public class PaintingToolEditor : EditorWindow
                 FrameData.RemoveAt(FrameData.childCount-1);
             }
         }
+        UpdateLayerButtons();
     }
     private void RemoveAnimationAtIndex(int index)
     {
@@ -325,16 +409,19 @@ public class PaintingToolEditor : EditorWindow
         {
             AnimationList.RemoveAt(AnimationList.childCount-2);
         }
+        UpdateAnimationButtons();
     }
 
     private void DeleteAnimation(ClickEvent click,Button AnimationToDelete)
     {
         Debug.Log("Delete " + AnimationList.IndexOf(AnimationToDelete.parent.parent.parent));
         RemoveAnimationAtIndex(AnimationList.IndexOf(AnimationToDelete.parent.parent.parent));
+        UpdateAnimationButtons();
     }
     private void DeleteLayer(ClickEvent click,Button LayerToDelete)
     {
         RemoveLayerAtIndex(LayerList.IndexOf(LayerToDelete.parent.parent.parent.parent));
+        UpdateLayerButtons();
     }
     private void SelectAnimationAndFrame(ClickEvent click,Button button)
     {
@@ -372,6 +459,41 @@ public class PaintingToolEditor : EditorWindow
         
 
     }
+    private void RenameLayer(ClickEvent clicked,Button button)
+    {
+        int index = LayerList.IndexOf(button.parent.parent.parent.parent);
+
+        VisualElement root = rootVisualElement;
+
+        VisualTreeAsset RenamePopup = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Painting Tool/UI/RenamePopupWindow.uxml");
+        //if ( root.ClassListContains(RenamePopup))
+        //{
+        //    return;
+        //}
+        VisualElement RenamePopupWindow = RenamePopup.CloneTree();
+        root.Add(RenamePopupWindow);
+
+        RenamePopupWindow.Q<Button>("ExitButton").clicked+= () => { root.Remove(RenamePopupWindow); };
+        TextField textField = RenamePopupWindow.Q<TextField>("NameField");
+        textField.name = index.ToString();
+        textField.value = PainterScript.CanvasImage[0][index].LayerName;
+        RenamePopupWindow.Q<Button>("ConfirmButton").RegisterCallback<ClickEvent,VisualElement>(RenamedLayer,RenamePopupWindow);
+
+    }
+
+    private void RenamedLayer(ClickEvent clicked, VisualElement PopupWindow)
+    {
+        TextField textfield = PopupWindow.Q<TextField>();
+        int index = int.Parse(textfield.name);
+        textfield.label = index.ToString();
+        if (textfield.value != "")
+        {
+            PainterScript.UpdateName(index,textfield.value);
+            LayerList[index].Q<Button>("LayerButton").text = textfield.value;
+        }
+        rootVisualElement.Remove(PopupWindow);
+    }
+
     private void SelectLayer(ClickEvent Clicked, Button LayerButton)
     {
         int index = LayerList.IndexOf(LayerButton.parent.parent);
@@ -415,6 +537,9 @@ public class PaintingToolEditor : EditorWindow
 
         Button MoveDownButton = Layer.Q<Button>("DownButton");
         MoveDownButton.RegisterCallback<ClickEvent, Button>(MoveLayer, MoveDownButton);
+
+        Button RenameButton = Layer.Q<Button>("RenameButton");
+        RenameButton.RegisterCallback<ClickEvent, Button>(RenameLayer,RenameButton);
     }
     private void ChangeColour()
     {
@@ -618,4 +743,40 @@ public class PaintingToolEditor : EditorWindow
         paint = false;
     }
 
+    Texture2D CopiedLayer;
+
+    [Shortcut("Painting Tool/Copy Layer", KeyCode.C,ShortcutModifiers.Shift | ShortcutModifiers.Alt)]
+    private static void CopyShortcut()
+    {
+        Debug.Log("Copied Layer");
+        SetEditorReference();
+        EditorReference.CopyLayer();
+    }
+    private void CopyLayer()
+    {
+        if (PainterScript == null)
+            return;
+
+        Color[] LayerImage = PainterScript.CanvasImage[PainterScript.SelectedAnimation][PainterScript.SelectedLayer].LayerImage.GetPixels();
+        if (CopiedLayer != null)
+            DestroyImmediate(CopiedLayer);
+        CopiedLayer = new Texture2D(width,height);
+        CopiedLayer.SetPixels(LayerImage);
+    }
+    [Shortcut("Painting Tool/Paste Layer", KeyCode.V, ShortcutModifiers.Shift | ShortcutModifiers.Alt)]
+    private static void PasteShortcut()
+    {
+        SetEditorReference();
+        EditorReference.PasteLayer();
+    }
+    private void PasteLayer()
+    {
+        if (PainterScript == null)
+            return;
+
+        if (CopiedLayer!=null)
+        {
+            PainterScript.PasteLayer(CopiedLayer);
+        }
+    }
 }

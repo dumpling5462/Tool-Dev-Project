@@ -84,6 +84,22 @@ public class ChangesStack
     {
         if (changeStack[0].layer.LayerImage != null)
             UnityEngine.Object.DestroyImmediate(changeStack[0].layer.LayerImage);
+        if (changeStack[0].Frame != null)
+        {
+            foreach (PaintingToolScript.PaintLayer Layer in changeStack[0].Frame)
+            {
+                if (Layer.LayerImage != null)
+                    UnityEngine.Object.DestroyImmediate(Layer.LayerImage);
+            }
+        }
+        if (changeStack[0].Layers != null)
+        {
+            foreach (PaintingToolScript.PaintLayer Layer in changeStack[0].Layers)
+            {
+                if (Layer.LayerImage != null)
+                    UnityEngine.Object.DestroyImmediate(Layer.LayerImage);
+            }
+        }
 
         changeStack[0] = new Changes();
         for (int i = 1; i < changeStack.Length; i++)
