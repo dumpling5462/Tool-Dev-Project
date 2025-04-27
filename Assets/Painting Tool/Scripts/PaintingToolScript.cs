@@ -379,22 +379,23 @@ public class PaintingToolScript
             {
                 if (change.SelectedLayer == -1)
                 {
-                    foreach (PaintLayer layer in CanvasImage[change.SelectedAnim])
-                    {
-                        UnityEngine.Object.DestroyImmediate(layer.LayerImage);
-                    }
-                    CanvasImage.RemoveAt(change.SelectedAnim);
+                    //foreach (PaintLayer layer in CanvasImage[change.SelectedAnim])
+                    //{
+                    //    UnityEngine.Object.DestroyImmediate(layer.LayerImage);
+                    //}
+                    //CanvasImage.RemoveAt(change.SelectedAnim);
                     RemovedAnimation(change.SelectedAnim);
                 }
                 else
                 {
-                    foreach (List<PaintLayer> Frame in CanvasImage)
-                    {
-                        UnityEngine.Object.DestroyImmediate(Frame[change.SelectedLayer].LayerImage);
-                        Frame.RemoveAt(change.SelectedLayer);
-                    }
                     RemovedLayer(change.SelectedLayer);
-                }
+                    //foreach (List<PaintLayer> Frame in CanvasImage)
+                    //{
+                    //    if (Frame[change.SelectedLayer].LayerImage)
+                    //        UnityEngine.Object.DestroyImmediate(Frame[change.SelectedLayer].LayerImage);
+                    //    Frame.RemoveAt(change.SelectedLayer);
+                    //}
+            }
             }
         }
         else if (change.Delete)
@@ -603,8 +604,12 @@ public class PaintingToolScript
         DeleteMade(LayerIndex,-1);
         foreach (List<PaintLayer>Frame in CanvasImage)
         {
-            UnityEngine.Object.DestroyImmediate(Frame[LayerIndex].LayerImage);
-            Frame.RemoveAt(LayerIndex);
+            if (LayerIndex > -1 && LayerIndex < CanvasImage[0].Count)
+            {
+                if (Frame[LayerIndex].LayerImage)
+                    UnityEngine.Object.DestroyImmediate(Frame[LayerIndex].LayerImage);
+                Frame.RemoveAt(LayerIndex);
+            }
         }
         
             UpdateSelectedLayer(0,true);
