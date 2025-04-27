@@ -126,6 +126,9 @@ public class PaintingToolEditor : EditorWindow
         PainterScript.VisibiltyChange += LayerVisibiltyChange;
 
         PainterScript.LayerMoved += MovedLayer;
+
+
+
         AddAnimation();
         AddLayer();
         UpdateAnimationButtons();
@@ -459,7 +462,7 @@ public class PaintingToolEditor : EditorWindow
         
 
     }
-    private void RenameLayer(ClickEvent clicked,Button button)
+    private void OpenRenameWindow(ClickEvent clicked,Button button)
     {
         int index = LayerList.IndexOf(button.parent.parent.parent.parent);
 
@@ -539,7 +542,7 @@ public class PaintingToolEditor : EditorWindow
         MoveDownButton.RegisterCallback<ClickEvent, Button>(MoveLayer, MoveDownButton);
 
         Button RenameButton = Layer.Q<Button>("RenameButton");
-        RenameButton.RegisterCallback<ClickEvent, Button>(RenameLayer,RenameButton);
+        RenameButton.RegisterCallback<ClickEvent, Button>(OpenRenameWindow,RenameButton);
     }
     private void ChangeColour()
     {
