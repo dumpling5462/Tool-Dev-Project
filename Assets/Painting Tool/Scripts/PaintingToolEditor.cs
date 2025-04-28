@@ -4,6 +4,9 @@ using UnityEngine.UIElements;
 using UnityEditor.ShortcutManagement;
 using UnityEditor.UIElements;
 using System.IO;
+using System;
+using UnityEngine.InputSystem;
+using UnityEngine.Rendering;
 public class PaintingToolEditor : EditorWindow
 {
     private PaintingToolScript PainterScript;
@@ -19,6 +22,7 @@ public class PaintingToolEditor : EditorWindow
     public Color SecondaryColor;
 
     bool paint=false;
+    bool isMouseDown = false;
 
     [MenuItem("Unity Paint/Menu")]
     public static void ShowMenuWindow()
@@ -128,8 +132,11 @@ public class PaintingToolEditor : EditorWindow
 
         VisualElement DisplayTex = root.Q<VisualElement>("DisplayTexture");
         DisplayTex.RegisterCallback<ClickEvent>(Paint);
-        DisplayTex.RegisterCallback<MouseEnterEvent>(MouseOver);
-        DisplayTex.RegisterCallback<MouseLeaveEvent>(MouseOut);
+        DisplayTex.RegisterCallback<PointerEnterEvent>(MouseOver);
+        DisplayTex.RegisterCallback<PointerLeaveEvent>(MouseOut);
+        DisplayTex.RegisterCallback<PointerDownEvent>(MouseDown);
+        DisplayTex.RegisterCallback<PointerUpEvent>(MouseUp);
+        DisplayTex.RegisterCallback<PointerMoveEvent>(MouseMove);
 
         PainterScript.UpdateCanvas += UpdateDisplayImage;
         PainterScript.ColourChange += UpdateColour;
@@ -586,38 +593,49 @@ public class PaintingToolEditor : EditorWindow
         }
         if (!paint)
             return;
+        if (isPainting)
+            return;
+        Vector2 mousePosition = Clicked.position;
+        Vector2 PaintPosition = CalculateOffset(mousePosition.x,mousePosition.y);
+        PainterScript.PressedPixel((int)PaintPosition.x,(int)PaintPosition.y);
 
+    }
+
+    private Vector2 CalculateOffset(float x, float y)
+    {
         VisualElement root = rootVisualElement;
-        VisualElement Image = root.Q<VisualElement>("DisplayTexture");
+        VisualElement Display = root.Q<VisualElement>("DisplayTexture");
 
-        Vector2 position = Clicked.position;
+        Vector2 maxBound = new Vector2(Display.worldBound.xMax, Display.worldBound.yMax);
+        Vector2 minBound = new Vector2(Display.worldBound.xMin, Display.worldBound.yMin);
 
-        float x = position.x;
-        //////x -= Image.worldBound.xMin;
-        float y = position.y;
-        //////y -= Image.worldBound.yMin;
+        x = x - minBound.x;
+        y = y - minBound.y;
 
-        Vector2 maxBound = new Vector2(Image.worldBound.xMax,Image.worldBound.yMax);
-        Vector2 minBound = new Vector2(Image.worldBound.xMin, Image.worldBound.yMin);
-        float distance = maxBound.x - minBound.x;
-        float distance2 = maxBound.y - minBound.y;
-        x %= width; y %= height;
-        x *= distance/width;
-        y *= distance2/height;
-        
+        // Element size
+        float elementWidth = maxBound.x - minBound.x;
+        float elementHeight = maxBound.y - minBound.y;
 
 
-        //Debug.Log(Image.worldBound.xMin + "  " + Image.worldBound.yMin + "   " + position);
+        // How the texture is scaled to fit
+        float scaleX = elementWidth / width;
+        float scaleY = elementHeight / height;
 
-        //if (x >= width)
-        //    x /= width;
-        //if (y >= height)
-        //   y /= height;
+        float scale = Mathf.Min(scaleX, scaleY);
 
-        // This is relative to the VisualElement
+        float textureDisplayWidth = width * scale;
+        float textureDisplayHeight = height * scale;
 
+        // Offsets if the texture is centered
+        float offsetX = (elementWidth - textureDisplayWidth) / 2;
+        float offsetY = (elementHeight - textureDisplayHeight) / 2;
 
-        PainterScript.PressedPixel((int)x,(int)y);
+        // Mouse position relative to texture
+        float textureX = (x - offsetX) / scale;
+        float textureY = (y - offsetY) / scale;
+        textureY = height - textureY;
+
+        return (new Vector2(textureX,textureY));
     }
     private void SwapColour()
     {
@@ -838,13 +856,51 @@ public class PaintingToolEditor : EditorWindow
     }
     public void SaveImage() { }
 
-    private void MouseOver(MouseEnterEvent mouse)
+    private void MouseOver(PointerEnterEvent mouse)
     {
         paint = true;
     }
-    private void MouseOut(MouseLeaveEvent mouse)
+    private void MouseOut(PointerLeaveEvent mouse)
     {
         paint = false;
+    }
+    private void MouseUp(PointerUpEvent mouse)
+    {
+        if (isPainting)
+        {
+            Vector2 position = mouse.position;
+            Vector2 PaintPosition = CalculateOffset(position.x, position.y);
+            PainterScript.PressedPixel((int)PaintPosition.x, (int)PaintPosition.y,true);
+            isPainting = false;
+        }
+        isMouseDown = false;
+    }
+    private void MouseDown(PointerDownEvent mouse)
+    {
+        isMouseDown = true;
+    }
+    private bool isPainting;
+    private void MouseMove(PointerMoveEvent mouse)
+    {
+        if (PainterScript == null)
+        {
+            return;
+        }
+        if (!paint)
+            return;
+        if (!isMouseDown)
+        {
+            return;
+        }
+        if (PainterScript.SelectedBrush == PaintingToolScript.BrushMode.Paintbrush || PainterScript.SelectedBrush == PaintingToolScript.BrushMode.Eraser)
+        {
+            if (!isPainting)
+                PainterScript.RegisterChange();
+        isPainting = true;
+        Vector2 position = mouse.position;
+        Vector2 PaintPosition = CalculateOffset(position.x, position.y);
+        PainterScript.PressedPixel((int)PaintPosition.x, (int)PaintPosition.y,true);
+        }
     }
 
     Texture2D CopiedLayer;

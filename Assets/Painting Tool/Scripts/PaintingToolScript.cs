@@ -199,10 +199,11 @@ public class PaintingToolScript
 
     public void PressedPixel(int x,int y)
     {
-        //if (x < 0 || x >= CanvasWidth || y < 0 || y >= CanvasHeight)
-        //    return;
+        if ((CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.GetPixel(x,y) == SelectedColour && SelectedBrush != BrushMode.Eraser) || (CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.GetPixel(x, y) == new Color(0,0,0,0) && SelectedBrush == BrushMode.Eraser))
+            return;
+        if (x < 0 || x >= CanvasWidth || y < 0 || y >= CanvasHeight)
+            return;
         ChangeMade();
-        UnityEngine.Debug.Log("Paint " + SelectedAnimation + " " + SelectedLayer);
         switch (SelectedBrush)
         {
             case BrushMode.Paintbrush:
@@ -222,6 +223,38 @@ public class PaintingToolScript
         CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.Apply();
         UpdateDisplayImage();
     }
+    public void PressedPixel(int x, int y, bool Painting)
+    {
+        if ((CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.GetPixel(x, y) == SelectedColour && SelectedBrush != BrushMode.Eraser) || (CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.GetPixel(x, y) == new Color(0, 0, 0, 0) && SelectedBrush == BrushMode.Eraser))
+            return;
+        if (x < 0 || x >= CanvasWidth || y < 0 || y >= CanvasHeight)
+            return;
+        if (!Painting)
+            ChangeMade();
+        switch (SelectedBrush)
+        {
+            case BrushMode.Paintbrush:
+                PaintPixel(x, y, SelectedColour);
+                break;
+            case BrushMode.PaintBucket:
+                Fill(x, y, GetPixel(x, y));
+                break;
+            case BrushMode.Eraser:
+                PaintPixel(x, y, new Color(0, 0, 0, 0));
+                break;
+            case BrushMode.Eyedropper:
+                EyeDropper(x, y);
+                break;
+        }
+
+        CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.Apply();
+        UpdateDisplayImage();
+    }
+    public void RegisterChange()
+    {
+        ChangeMade();
+    }
+
 
     private void PaintPixel(int x,int y,Color selectedColour)
     {
@@ -238,7 +271,36 @@ public class PaintingToolScript
     }
     private void Fill(int x, int y, Color ColorToFill)
     {
+        if (x < 0 || x >= CanvasWidth || y < 0 || y >=CanvasHeight)
+            return;
+        if (CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.GetPixel(x, y) == SelectedColour || CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.GetPixel(x, y) != ColorToFill)
+            return;
 
+        Texture2D Layer = CanvasImage[SelectedAnimation][SelectedLayer].LayerImage;
+
+        Queue<Vector2Int> pixels = new Queue<Vector2Int>();
+        pixels.Enqueue(new Vector2Int(x, y));
+
+        while (pixels.Count > 0)
+        {
+            Vector2Int current = pixels.Dequeue();
+            int CurrentX = current.x;
+            int CurrentY = current.y;
+            if (x < 0 || x >= CanvasWidth || y < 0 || y >= CanvasHeight)
+                continue;
+
+            if (Layer.GetPixel(CurrentX, CurrentY) != ColorToFill)
+                continue;
+
+            Layer.SetPixel(CurrentX, CurrentY, SelectedColour);
+
+            pixels.Enqueue(new Vector2Int(CurrentX + 1, CurrentY));
+            pixels.Enqueue(new Vector2Int(CurrentX - 1, CurrentY));
+            pixels.Enqueue(new Vector2Int(CurrentX, CurrentY + 1));
+            pixels.Enqueue(new Vector2Int(CurrentX, CurrentY - 1));
+        }
+
+        Layer.Apply();
     }
     private Color GetPixel(int x, int y)
     {
@@ -357,6 +419,7 @@ public class PaintingToolScript
             NewLayer.LayerImage = new Texture2D(CanvasWidth,CanvasHeight);
             NewLayer.LayerImage.SetPixels(colors);
             UnityEngine.Object.DestroyImmediate(CanvasImage[change.SelectedAnim][change.SelectedLayer].LayerImage);
+            UnityEngine.Object.DestroyImmediate(change.layer.LayerImage);
             CanvasImage[change.SelectedAnim][change.SelectedLayer] = NewLayer;
             if (change.SelectedLayer != SelectedLayer)
                 UpdateSelectedLayer(change.SelectedLayer, true);
@@ -420,6 +483,7 @@ public class PaintingToolScript
                         LayerToAdd.LayerImage = new Texture2D(CanvasWidth, CanvasHeight);
                         LayerToAdd.LayerImage.SetPixels(Colors);
                         newFrame.Add(LayerToAdd);
+                        UnityEngine.Object.DestroyImmediate(Layer.LayerImage);
                     }
 
 
@@ -445,6 +509,7 @@ public class PaintingToolScript
                             newLayer.LayerImage = new Texture2D(CanvasWidth, CanvasHeight);
                             newLayer.LayerImage.SetPixels(colors);
                             Frame.Insert(change.SelectedLayer,newLayer);
+                            UnityEngine.Object.DestroyImmediate(change.Layers[num].LayerImage);
                             num++;
                         }
                     }
