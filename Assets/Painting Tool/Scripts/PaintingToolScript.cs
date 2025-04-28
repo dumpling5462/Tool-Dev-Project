@@ -169,10 +169,10 @@ public class PaintingToolScript
                     }
                 }
             }
-            foreach (PaintLayer layer in layers)
-            {
-                UnityEngine.Object.DestroyImmediate(layer.LayerImage);
-            }
+            //foreach (PaintLayer layer in layers)
+            //{
+            //    UnityEngine.Object.DestroyImmediate(layer.LayerImage);
+            //}
         }
         else if (CanvasImage[SelectedAnimation][0].LayerVisible)
         {
@@ -855,10 +855,10 @@ public class PaintingToolScript
                         }
                     }
                 }
-                foreach (PaintLayer layer in layers)
-                {
-                    UnityEngine.Object.DestroyImmediate(layer.LayerImage);
-                }
+                //foreach (PaintLayer layer in layers)
+                //{
+                //    UnityEngine.Object.DestroyImmediate(layer.LayerImage);
+                //}
             }
             else if (Frame[0].LayerVisible)
             {
