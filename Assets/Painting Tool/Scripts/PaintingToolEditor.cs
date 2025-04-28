@@ -3,6 +3,7 @@ using UnityEditor;
 using UnityEngine.UIElements;
 using UnityEditor.ShortcutManagement;
 using UnityEditor.UIElements;
+using System.IO;
 public class PaintingToolEditor : EditorWindow
 {
     private PaintingToolScript PainterScript;
@@ -40,6 +41,7 @@ public class PaintingToolEditor : EditorWindow
         StyleSheet sheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Painting Tool/UI/PaintMenuStyleSheet.uss");
         root.styleSheets.Add(sheet);
         root.Q<Button>("NewButton").clicked +=OpenCanvasSizeMenu;
+        root.Q<Button>("LoadButton").clicked += loadFileData;
     }
 
     private void OpenCanvasSizeMenu()
@@ -55,6 +57,12 @@ public class PaintingToolEditor : EditorWindow
         VisualElement root = rootVisualElement;
         width = root.Q<IntegerField>("WidthField").value;
         height = root.Q<IntegerField>("HeightField").value;
+        if (width < 1 || width > 512 || height < 1 || height > 512)
+        {
+            width = 16; height = 16;
+            Debug.LogError("Size not valid");
+            return;
+        }
         StyleSheet sheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Painting Tool/UI/PaintMenuStyleSheet.uss");
         root.styleSheets.Remove(sheet);
         root.Clear();
@@ -65,6 +73,12 @@ public class PaintingToolEditor : EditorWindow
 
         InitializePainter();
         InitializePaintBindings();
+
+        AddAnimation();
+        AddLayer();
+        UpdateAnimationButtons();
+        UpdateLayerButtons();
+        Brush();
 
         DisplayImage = PainterScript.GetDisplayImage();
         VisualElement Image = root.Q<VisualElement>("DisplayTexture");
@@ -101,7 +115,7 @@ public class PaintingToolEditor : EditorWindow
         root.Q<Button>("SwapButton").clicked += SwapColour;
 
         root.Q<Button>("SaveButton").clicked += SaveImage;
-        root.Q<Button>("ExportButton").clicked += ExportImage;
+        root.Q<Button>("ExportButton").clicked += OpenExportPopup;
 
         AnimationList = root.Q<ScrollView>("AnimationList");
         LayerList = root.Q<ScrollView>("LayerList");
@@ -131,14 +145,6 @@ public class PaintingToolEditor : EditorWindow
         PainterScript.VisibiltyChange += LayerVisibiltyChange;
 
         PainterScript.LayerMoved += MovedLayer;
-
-
-
-        AddAnimation();
-        AddLayer();
-        UpdateAnimationButtons();
-        UpdateLayerButtons();
-        Brush();
     }
     private void MovedLayer(int OldIndex,int newIndex)
     {
@@ -413,6 +419,7 @@ public class PaintingToolEditor : EditorWindow
     }
     private void RemoveAnimationAtIndex(int index)
     {
+        Debug.Log("delete anim");
         if (PainterScript.DeleteAnimation(index))
         {
             AnimationList.RemoveAt(AnimationList.childCount-2);
@@ -472,12 +479,26 @@ public class PaintingToolEditor : EditorWindow
 
         VisualElement root = rootVisualElement;
 
+        if (root.Q<VisualElement>("RenamePopupWindow") != null) 
+        {
+            return;
+        }
+
         VisualTreeAsset RenamePopup = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Painting Tool/UI/RenamePopupWindow.uxml");
         //if ( root.ClassListContains(RenamePopup))
         //{
         //    return;
         //}
         VisualElement RenamePopupWindow = RenamePopup.CloneTree();
+        RenamePopupWindow.style.position = Position.Absolute;
+        RenamePopupWindow.style.top = 0;
+        RenamePopupWindow.style.left = 0;
+        RenamePopupWindow.style.right = 0;
+        RenamePopupWindow.style.bottom = 0;
+
+        RenamePopupWindow.style.flexDirection = FlexDirection.Row;
+        RenamePopupWindow.style.justifyContent = Justify.Center;
+        RenamePopupWindow.style.alignItems = Align.Center;
         root.Add(RenamePopupWindow);
 
         RenamePopupWindow.Q<Button>("ExitButton").clicked+= () => { root.Remove(RenamePopupWindow); };
@@ -739,10 +760,76 @@ public class PaintingToolEditor : EditorWindow
         }
         UpdateAnimationButtons();
     }
-    public void ExportImage()
+
+    public void OpenExportPopup()
     {
-        UpdateDisplayImage();
-        DisplayImage.EncodeToPNG();
+        VisualElement root = rootVisualElement;
+
+        if (root.Q<VisualElement>("ExportPopupWindow") != null)
+        {
+            return;
+        }
+
+        VisualTreeAsset ExportPopup = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Painting Tool/UI/ExportPopup.uxml");
+        VisualElement ExportPopupWindow = ExportPopup.CloneTree();
+        ExportPopupWindow.style.position = Position.Absolute;
+        ExportPopupWindow.style.top = 0;
+        ExportPopupWindow.style.left = 0;
+        ExportPopupWindow.style.right = 0;
+        ExportPopupWindow.style.bottom = 0;
+
+        ExportPopupWindow.style.flexDirection = FlexDirection.Row;
+        ExportPopupWindow.style.justifyContent = Justify.Center;
+        ExportPopupWindow.style.alignItems = Align.Center;
+        root.Add(ExportPopupWindow);
+
+        ExportPopupWindow.Q<Button>("CancelButton").clicked += () => { root.Remove(ExportPopupWindow); };
+        ExportPopupWindow.Q<Button>("ExportImageButton").RegisterCallback<ClickEvent,VisualElement>(ExportImage,ExportPopupWindow);
+        ExportPopupWindow.Q<Button>("ExportSpriteSheetButton").RegisterCallback<ClickEvent, VisualElement>(ExportSpriteSheet, ExportPopupWindow);
+    }
+    public void ExportImage(ClickEvent clicked, VisualElement Popupwindow)
+    {
+        rootVisualElement.Remove(Popupwindow);
+        Texture2D ExportImage;
+        ExportImage = PainterScript.GetExportImage();
+        if (ExportImage == null)
+            return;
+        byte[] pngImage = ExportImage.EncodeToPNG();
+        DestroyImmediate(ExportImage);
+        if (pngImage == null)
+        {
+            Debug.Log("Can't export Image");
+            return;
+        }
+        string path = EditorUtility.SaveFilePanel("save Image as PNG","","CoolPaint!","png");
+        if (string.IsNullOrEmpty(path))
+        {
+            Debug.Log("Canceled save");
+            return;
+        }
+        File.WriteAllBytes(path, pngImage);
+    }
+    public void ExportSpriteSheet(ClickEvent clicked, VisualElement Popupwindow)
+    {
+        rootVisualElement.Remove(Popupwindow);
+        Texture2D ExportImage;
+        ExportImage = PainterScript.GetExportImages();
+        if (ExportImage == null)
+            return;
+        byte[] pngImage = ExportImage.EncodeToPNG();
+        DestroyImmediate(ExportImage);
+        if (pngImage == null)
+        {
+            Debug.Log("Can't export Image");
+            return;
+        }
+        string path = EditorUtility.SaveFilePanel("save Image as PNG", "", "CoolPaint!", "png");
+        if (string.IsNullOrEmpty(path))
+        {
+            Debug.Log("Canceled save");
+            return;
+        }
+        File.WriteAllBytes(path, pngImage);
     }
 
     public void LoadImage()
@@ -795,5 +882,139 @@ public class PaintingToolEditor : EditorWindow
         {
             PainterScript.PasteLayer(CopiedLayer);
         }
+    }
+
+    private void loadFileData()
+    {
+        string path = EditorUtility.OpenFilePanel("Load Image","","png,jpg,jpeg");
+
+        if (string.IsNullOrEmpty(path))
+        {
+            Debug.Log("Load canceled.");
+            return;
+        }
+        string extension = Path.GetExtension(path).ToLower();
+
+        if (extension == ".asset" ||extension == ".pain")
+        {
+            if (extension == ".pain")
+            {
+                AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
+                path = path.Replace(".pain", ".asset");
+            }
+            PaintSO PaintFile = AssetDatabase.LoadAssetAtPath<PaintSO>(path);
+            if (PaintFile != null)
+            {
+                if (PaintFile is PaintSO)
+                {
+                    width = PaintFile.width;
+                    height = PaintFile.height;
+                    LoadPainter(PaintFile);
+                }
+                else
+                {
+                    Debug.LogError("The file isn't a .pain file");
+                }
+            }
+            else
+            {
+                Debug.LogError("Could not load the file at the path");
+            }
+        }
+        else if (extension == ".png" || extension == ".jpg" || extension == ".jpeg")
+        {
+            byte[] fileData = File.ReadAllBytes(path);
+            Texture2D tex = new Texture2D(1, 1);
+            tex.LoadImage(fileData);
+            width = tex.width;
+            height = tex.height;
+            LoadPainter(tex);
+        }
+        else
+        {
+            Debug.LogError("wrong file type selected");
+            return;
+        }
+    }
+    private void LoadPainter(Texture2D TextureToLoad)
+    {
+        VisualElement root = rootVisualElement;
+        StyleSheet sheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Painting Tool/UI/PaintMenuStyleSheet.uss");
+        root.styleSheets.Remove(sheet);
+        root.Clear();
+        VisualTreeAsset asset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Painting Tool/UI/PaintCanvasUI.uxml");
+        asset.CloneTree(root);
+        sheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Painting Tool/UI/PaintCanvasStyleSheet.uss");
+        root.styleSheets.Add(sheet);
+
+        InitializePainter();
+        InitializePaintBindings();
+
+        AddAnimation();
+        LoadLayer(TextureToLoad);
+        UpdateAnimationButtons();
+        UpdateLayerButtons();
+        Brush();
+
+        DisplayImage = PainterScript.GetDisplayImage();
+        VisualElement Image = root.Q<VisualElement>("DisplayTexture");
+        Image.style.backgroundImage = new StyleBackground(DisplayImage);
+    }
+
+    public void LoadLayer(Texture2D TextureToLoad)
+    {
+        if (PainterScript == null)
+        {
+            return;
+        }
+        VisualTreeAsset LayerInfo = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Painting Tool/UI/PaintLayerItem.uxml");
+        VisualElement Layer = LayerInfo.CloneTree();
+        LayerList.Insert(LayerList.childCount - 1, Layer);
+        Button LayerButton = Layer.Q<Button>("LayerButton");
+        LayerButton.text = ("Layer " + (LayerList.IndexOf(Layer) + 1));
+        LayerButton.RegisterCallback<ClickEvent, Button>(SelectLayer, LayerButton);
+        UpdateAnimationLayers();
+        PainterScript.LoadLayer(TextureToLoad,"Layer " + (LayerList.IndexOf(Layer) + 1));
+        DestroyImmediate(TextureToLoad);
+
+        Toggle ToggleButton = Layer.Q<Toggle>("Toggle");
+        ToggleButton.RegisterCallback<ClickEvent, Toggle>(ToggleVisibilty, ToggleButton);
+
+        Button DeleteButton = Layer.Q<Button>("DeleteButton");
+        DeleteButton.RegisterCallback<ClickEvent, Button>(DeleteLayer, DeleteButton);
+
+        Button MoveUpButton = Layer.Q<Button>("UpButton");
+        MoveUpButton.RegisterCallback<ClickEvent, Button>(MoveLayer, MoveUpButton);
+
+        Button MoveDownButton = Layer.Q<Button>("DownButton");
+        MoveDownButton.RegisterCallback<ClickEvent, Button>(MoveLayer, MoveDownButton);
+
+        Button RenameButton = Layer.Q<Button>("RenameButton");
+        RenameButton.RegisterCallback<ClickEvent, Button>(OpenRenameWindow, RenameButton);
+    }
+
+    private void LoadPainter(PaintSO PaintFile)
+    {
+        VisualElement root = rootVisualElement;
+        StyleSheet sheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Painting Tool/UI/PaintMenuStyleSheet.uss");
+        root.styleSheets.Remove(sheet);
+        root.Clear();
+        VisualTreeAsset asset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Painting Tool/UI/PaintCanvasUI.uxml");
+        asset.CloneTree(root);
+        sheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Painting Tool/UI/PaintCanvasStyleSheet.uss");
+        root.styleSheets.Add(sheet);
+
+        InitializePainter();
+        InitializePaintBindings();
+
+
+
+        UpdateAnimationButtons();
+        UpdateLayerButtons();
+        Brush();
+
+        DisplayImage = PainterScript.GetDisplayImage();
+        VisualElement Image = root.Q<VisualElement>("DisplayTexture");
+        Image.style.backgroundImage = new StyleBackground(DisplayImage);
     }
 }

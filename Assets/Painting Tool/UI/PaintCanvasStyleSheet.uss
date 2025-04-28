@@ -44,6 +44,8 @@ VisualElement {
     width: auto;
     height: auto;
     margin-top: 5px;
+    color: rgb(0, 0, 0);
+    -unity-text-align: upper-center;
 }
 
 .PaintToolbutton:hover {

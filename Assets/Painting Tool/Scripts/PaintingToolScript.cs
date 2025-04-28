@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Xml.Linq;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
@@ -167,6 +168,10 @@ public class PaintingToolScript
                         }
                     }
                 }
+            }
+            foreach (PaintLayer layer in layers)
+            {
+                UnityEngine.Object.DestroyImmediate(layer.LayerImage);
             }
         }
         else if (CanvasImage[SelectedAnimation][0].LayerVisible)
@@ -646,6 +651,7 @@ public class PaintingToolScript
         DeleteChange.Delete = true;
         if (AnimationIndex > -1)
         {
+            DeleteChange.Frame = new List<PaintLayer>();
             foreach (PaintLayer Layer in CanvasImage[AnimationIndex])
             {
                 PaintLayer newLayer;
@@ -691,7 +697,13 @@ public class PaintingToolScript
         }
         else
         {
-            AddedChange.layer = CanvasImage[0][LayerIndex];
+            PaintLayer layer;
+            layer.LayerName = CanvasImage[0][LayerIndex].LayerName;
+            layer.LayerVisible = CanvasImage[0][LayerIndex].LayerVisible;
+            Color[] colors = CanvasImage[0][LayerIndex].LayerImage.GetPixels();
+            layer.LayerImage = new Texture2D(CanvasWidth,CanvasHeight);
+            layer.LayerImage.SetPixels(colors);
+            AddedChange.layer = layer;
             AddedChange.SelectedLayer = LayerIndex;
         }
 
@@ -801,5 +813,109 @@ public class PaintingToolScript
             }
         }
         UpdateDisplayImage();
+    }
+
+    public void LoadLayer(Texture2D TextureToLoad, string LayerName)
+    {          
+            PaintLayer layer = new PaintLayer();
+            Color[] colors = TextureToLoad.GetPixels();
+            layer.LayerImage = new Texture2D(CanvasWidth, CanvasHeight);
+            layer.LayerImage.SetPixels(colors);
+            layer.LayerName = LayerName;
+            layer.LayerVisible = true;
+            layer.LayerImage.filterMode = FilterMode.Point;
+            CanvasImage[0].Add(layer);
+    }
+
+    public Texture2D GetExportImages()
+    {
+        Texture2D SpriteSheet = new Texture2D(CanvasWidth,CanvasHeight);
+        SpriteSheet.filterMode = FilterMode.Point;
+
+        foreach (List<PaintLayer> Frame in CanvasImage)
+        {
+            if (Frame.Count > 1)
+            {
+                List<PaintLayer> layers = new List<PaintLayer>(Frame);
+                layers.Reverse();
+
+                foreach (PaintLayer layer in layers)
+                {
+                    if (!layer.LayerVisible)
+                        continue;
+                    for (int y = 0; y < CanvasHeight; y++)
+                    {
+                        for (int x = 0; x < CanvasWidth; x++)
+                        {
+                            Color Pixel = layer.LayerImage.GetPixel(x, y);
+                            if (Pixel.a > 0 && layers.IndexOf(layer) != layers.Count - 1)
+                            {
+                                SpriteSheet.SetPixel(x, y, Pixel);
+                            }
+                        }
+                    }
+                }
+                foreach (PaintLayer layer in layers)
+                {
+                    UnityEngine.Object.DestroyImmediate(layer.LayerImage);
+                }
+            }
+            else if (Frame[0].LayerVisible)
+            {
+                for (int y = 0; y < CanvasHeight; y++)
+                {
+                    for (int x = 0; x < CanvasWidth; x++)
+                    {
+                        Color Pixel = Frame[0].LayerImage.GetPixel(x, y);
+                        SpriteSheet.SetPixel(x, y, Pixel);
+                    }
+                }
+            }
+        }
+
+        SpriteSheet.Apply();
+        return SpriteSheet;
+    }
+    public Texture2D GetExportImage()
+    {
+        Texture2D ExportTexture = new Texture2D(CanvasWidth, CanvasHeight);
+
+        ExportTexture.filterMode = FilterMode.Point;
+        if (CanvasImage[SelectedAnimation].Count > 1)
+        {
+            List<PaintLayer> layers = new List<PaintLayer>(CanvasImage[SelectedAnimation]);
+            layers.Reverse();
+
+            foreach (PaintLayer layer in layers)
+            {
+                if (!layer.LayerVisible)
+                    continue;
+                for (int y = 0; y < CanvasHeight; y++)
+                {
+                    for (int x = 0; x < CanvasWidth; x++)
+                    {
+                        Color Pixel = layer.LayerImage.GetPixel(x, y);
+                        if (Pixel.a > 0 && layers.IndexOf(layer) != layers.Count-1)
+                        {
+                            ExportTexture.SetPixel(x, y, Pixel);
+                        }
+                    }
+                }
+            }
+        }
+        else if (CanvasImage[SelectedAnimation][0].LayerVisible)
+        {
+            for (int y = 0; y < CanvasHeight; y++)
+            {
+                for (int x = 0; x < CanvasWidth; x++)
+                {
+                    Color Pixel = CanvasImage[SelectedAnimation][0].LayerImage.GetPixel(x, y);
+                    ExportTexture.SetPixel(x, y, Pixel);
+                }
+            }
+        }
+        ExportTexture.Apply();
+
+        return ExportTexture;
     }
 }

@@ -1,0 +1,7 @@
+<engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <engine:VisualElement name="ExportPopupWindow" style="align-self: center; align-content: flex-end; justify-content: space-around; background-color: rgb(66, 66, 66); margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; padding-top: 30px; padding-right: 30px; padding-bottom: 30px; padding-left: 30px;">
+        <engine:Button text="Cancel" name="CancelButton" />
+        <engine:Button text="Export Image" name="ExportImageButton" />
+        <engine:Button text="Export Sprite Sheet" name="ExportSpriteSheetButton" />
+    </engine:VisualElement>
+</engine:UXML>
