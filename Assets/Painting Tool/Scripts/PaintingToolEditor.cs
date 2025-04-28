@@ -387,6 +387,10 @@ public class PaintingToolEditor : EditorWindow
         Animationbutton.RegisterCallback<ClickEvent, Button>(SelectAnimation, Animationbutton);
         Button DeleteButton = Frame.Q<Button>("DeleteButton");
         DeleteButton.RegisterCallback<ClickEvent, Button>(DeleteAnimation, DeleteButton);
+        Button LeftButton = Frame.Q<Button>("LeftButton");
+        LeftButton.RegisterCallback<ClickEvent, Button>(MoveAnimation, LeftButton);
+        Button RightButton = Frame.Q<Button>("RightButton");
+        RightButton.RegisterCallback<ClickEvent, Button>(MoveAnimation, RightButton);
         UpdateAnimationLayers();
         UpdateAnimationButtons();
     }
@@ -405,6 +409,15 @@ public class PaintingToolEditor : EditorWindow
         ToggleButton.RegisterCallback<ClickEvent, Toggle>(ToggleVisibilty, ToggleButton);
         Button DeleteButton = Layer.Q<Button>("DeleteButton");
         DeleteButton.RegisterCallback<ClickEvent, Button>(DeleteLayer, DeleteButton);
+
+        Button MoveUpButton = Layer.Q<Button>("UpButton");
+        MoveUpButton.RegisterCallback<ClickEvent, Button>(MoveLayer, MoveUpButton);
+
+        Button MoveDownButton = Layer.Q<Button>("DownButton");
+        MoveDownButton.RegisterCallback<ClickEvent, Button>(MoveLayer, MoveDownButton);
+
+        Button RenameButton = Layer.Q<Button>("RenameButton");
+        RenameButton.RegisterCallback<ClickEvent, Button>(OpenRenameWindow, RenameButton);
         if (!LayerData.LayerVisible)
         {
             ToggleButton.value = false;
@@ -756,6 +769,7 @@ public class PaintingToolEditor : EditorWindow
     private void MoveAnimation(ClickEvent click, Button button)
     {
         VisualElement OuterAnimationElement = FindChild(AnimationList,button);
+        Debug.Log("move " + AnimationList.IndexOf(OuterAnimationElement));
         if (button.name == "LeftButton")
         {
             if (PainterScript.MoveAnimationUp(AnimationList.IndexOf(OuterAnimationElement)))
