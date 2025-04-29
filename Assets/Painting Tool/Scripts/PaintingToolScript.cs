@@ -997,4 +997,34 @@ public class PaintingToolScript
 
         return ExportTexture;
     }
+
+    public void loadPaintData(PaintSO PaintData)
+    {
+        CanvasWidth = PaintData.width;
+        CanvasHeight = PaintData.height;
+        SelectedAnimation = PaintData.animationIndex;
+        SelectedLayer = PaintData.LayerIndex;
+
+        foreach (List<PaintLayer> FrameData in PaintData.PaintData)
+        {
+            List<PaintLayer> newFrame = new List<PaintLayer>();
+            {
+                foreach (PaintLayer LayerData in FrameData)
+                {
+                    PaintLayer newLayer;
+                    newLayer.LayerName = LayerData.LayerName;
+                    newLayer.LayerVisible = LayerData.LayerVisible;
+                    newLayer.LayerImage = new Texture2D(CanvasWidth, CanvasHeight);
+                    Color32[] colors = LayerData.LayerImage.GetPixels32();
+                    newLayer.LayerImage.SetPixels32(colors);
+                    newLayer.LayerImage.filterMode = FilterMode.Point;
+                    newLayer.LayerImage.Apply();
+                    UnityEngine.Object.DestroyImmediate(LayerData.LayerImage);
+                    newFrame.Add(newLayer);
+                }
+            }
+            CanvasImage.Add(newFrame);
+        }
+        UpdateDisplayImage();
+    }
 }

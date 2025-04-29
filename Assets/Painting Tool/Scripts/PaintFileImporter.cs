@@ -2,12 +2,13 @@ using System.Collections.Generic;
 using UnityEditor.AssetImporters;
 using UnityEngine;
 using System.IO;
+using System;
 
 [ScriptedImporter(100, "pain")]
 public class PaintFileImporter : ScriptedImporter
 {
-    int width;
-    int height;
+    int width = 16;
+    int height = 16;
     public override void OnImportAsset(AssetImportContext ctx)
     {
         string fileText = File.ReadAllText(ctx.assetPath);
@@ -24,6 +25,7 @@ public class PaintFileImporter : ScriptedImporter
         PaintFile.LayerIndex = int.Parse(tokens[3]);
         PaintFile.PaintData  = ParsePaintData(tokens[4]);
 
+        PaintFile.name = Path.GetFileNameWithoutExtension(ctx.assetPath);
         ctx.AddObjectToAsset("Unity Paint", PaintFile);
         ctx.SetMainObject(PaintFile);
     }
@@ -54,33 +56,32 @@ public class PaintFileImporter : ScriptedImporter
     }
     private PaintingToolScript.PaintLayer ParseLayerData(string layerData)
     {
-        PaintingToolScript.PaintLayer Layer = new PaintingToolScript.PaintLayer();
+        PaintingToolScript.PaintLayer Layer;
 
         string[] tokens = layerData.Split('*', System.StringSplitOptions.RemoveEmptyEntries);
-        if (tokens.Length == 0) {
-            return Layer;
-        }
-
         Layer.LayerName = tokens[0];
         Layer.LayerVisible = bool.Parse(tokens[1]);
-        List<Color> colors = new List<Color>();
+        List<Color32> colors = new List<Color32>();
 
-        string[] PixelData = tokens[2].Split('-', System.StringSplitOptions.RemoveEmptyEntries);
-        Debug.Log(tokens[2]);
-        foreach (string token in PixelData)
-        {
-            if (token.Contains("RGBA"))
-            {
-                string ColorData = token.Substring(token.IndexOf('(')+1,token.IndexOf(')')-(token.IndexOf('(')+1));
-                UnityEngine.Debug.Log(ColorData);
-                string[] ColorValues = ColorData.Split(',', System.StringSplitOptions.RemoveEmptyEntries);
-                Color color = new Color(float.Parse(ColorValues[0]), float.Parse(ColorValues[1]), float.Parse(ColorValues[2]), float.Parse(ColorValues[3]));
-                colors.Add(color);
-            }
-        }
-        Layer.LayerImage = new Texture2D(width,height);
-        Layer.LayerImage.SetPixels(colors.ToArray());
-        Layer.LayerImage.Apply(updateMipmaps:false,makeNoLongerReadable: true);
+        //string[] PixelData = tokens[2].Split('-', System.StringSplitOptions.RemoveEmptyEntries);
+        //Debug.Log(tokens[2]);
+        //foreach (string token in PixelData)
+        //{
+        //    if (token.Contains("RGBA"))
+        //    {
+        //        string ColorData = token.Substring(token.IndexOf('(')+1,token.IndexOf(')')-(token.IndexOf('(')+1));
+        //        UnityEngine.Debug.Log(ColorData);
+        //        string[] ColorValues = ColorData.Split(',', System.StringSplitOptions.RemoveEmptyEntries);
+        //        Color32 color = new Color(float.Parse(ColorValues[0]), float.Parse(ColorValues[1]), float.Parse(ColorValues[2]), float.Parse(ColorValues[3]));
+        //        colors.Add(color);
+        //    }
+        //}
+        byte[] raw = Convert.FromBase64String(tokens[2]);
+        Layer.LayerImage = new Texture2D(width, height, TextureFormat.RGBA32, mipChain: false);
+        //Layer.LayerImage.SetPixels32(colors.ToArray());
+        Layer.LayerImage.LoadRawTextureData(raw);
+        //Layer.LayerImage.Apply(updateMipmaps: false, makeNoLongerReadable: true);
+        Layer.LayerImage.Apply();
 
         return Layer;
     }

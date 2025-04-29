@@ -7,6 +7,7 @@ using System.IO;
 using System;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
+using System.Collections.Generic;
 public class PaintingToolEditor : EditorWindow
 {
     private PaintingToolScript PainterScript;
@@ -991,7 +992,7 @@ public class PaintingToolEditor : EditorWindow
 
     private void loadFileData()
     {
-        string path = EditorUtility.OpenFilePanel("Load Image","","png,jpg,jpeg,pain,asset");
+        string path = EditorUtility.OpenFilePanel("Load Image","","png,jpg,jpeg,pain");
 
         if (string.IsNullOrEmpty(path))
         {
@@ -1000,26 +1001,33 @@ public class PaintingToolEditor : EditorWindow
         }
         string extension = Path.GetExtension(path).ToLower();
 
-        if (extension == ".asset" ||extension == ".pain")
+        if (/*extension == ".asset" || */extension == ".pain")
         {
-            if (extension == ".pain")
-            {
-                AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
-                path = path.Replace(".pain", ".asset");
-            }
-            PaintSO PaintFile = AssetDatabase.LoadAssetAtPath<PaintSO>(path);
+            //string projectPath = Application.dataPath;
+            //if (!path.StartsWith(projectPath))
+            //{
+            //    Debug.LogError("The selected file must be inside the project's Assets folder.");
+            //    return;
+            //}
+
+            //string newPath = "Assets" + path.Substring(projectPath.Length);
+            //if (extension == ".pain")
+            //{
+            //    Debug.Log("Pain Load");
+            //    AssetDatabase.ImportAsset(newPath);
+            //    Debug.Log(newPath);
+            //}
+            //PaintSO PaintFile;
+            //PaintFile = AssetDatabase.LoadAssetAtPath<PaintSO>(newPath);
+            PainFileParser parser = new PainFileParser();
+            PaintSO PaintFile = parser.ImportFileAtPath(path);
+
             if (PaintFile != null)
             {
-                if (PaintFile is PaintSO)
-                {
-                    width = PaintFile.width;
-                    height = PaintFile.height;
-                    LoadPainter(PaintFile);
-                }
-                else
-                {
-                    Debug.LogError("The file isn't a .pain file");
-                }
+                width = PaintFile.width;
+                height = PaintFile.height;
+                LoadPainter(PaintFile);
+
             }
             else
             {
@@ -1112,7 +1120,17 @@ public class PaintingToolEditor : EditorWindow
         InitializePainter();
         InitializePaintBindings();
 
-
+            Debug.Log(PaintFile.PaintData.Count);
+        for (int i = PaintFile.PaintData.Count; i > 0; i--)
+        {
+            LoadAnimation();
+        }
+        foreach (PaintingToolScript.PaintLayer layerLoadData in PaintFile.PaintData[0])
+        {
+            Debug.Log("Add Layer");
+            LoadLayer(layerLoadData);
+        }
+        PainterScript.loadPaintData(PaintFile);
 
         UpdateAnimationButtons();
         UpdateLayerButtons();
@@ -1121,5 +1139,58 @@ public class PaintingToolEditor : EditorWindow
         DisplayImage = PainterScript.GetDisplayImage();
         VisualElement Image = root.Q<VisualElement>("DisplayTexture");
         Image.style.backgroundImage = new StyleBackground(DisplayImage);
+    }
+
+    private void LoadLayer(PaintingToolScript.PaintLayer LayerToLoad)
+    {
+        if (PainterScript == null)
+        {
+            return;
+        }
+        VisualTreeAsset LayerInfo = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Painting Tool/UI/PaintLayerItem.uxml");
+        VisualElement Layer = LayerInfo.CloneTree();
+        LayerList.Insert(LayerList.childCount - 1, Layer);
+        Button LayerButton = Layer.Q<Button>("LayerButton");
+        LayerButton.text = (LayerToLoad.LayerName);
+        LayerButton.RegisterCallback<ClickEvent, Button>(SelectLayer, LayerButton);
+        UpdateAnimationLayers();
+
+        Toggle ToggleButton = Layer.Q<Toggle>("Toggle");
+        ToggleButton.value = LayerToLoad.LayerVisible;
+        ToggleButton.RegisterCallback<ClickEvent, Toggle>(ToggleVisibilty, ToggleButton);
+
+        Button DeleteButton = Layer.Q<Button>("DeleteButton");
+        DeleteButton.RegisterCallback<ClickEvent, Button>(DeleteLayer, DeleteButton);
+
+        Button MoveUpButton = Layer.Q<Button>("UpButton");
+        MoveUpButton.RegisterCallback<ClickEvent, Button>(MoveLayer, MoveUpButton);
+
+        Button MoveDownButton = Layer.Q<Button>("DownButton");
+        MoveDownButton.RegisterCallback<ClickEvent, Button>(MoveLayer, MoveDownButton);
+
+        Button RenameButton = Layer.Q<Button>("RenameButton");
+        RenameButton.RegisterCallback<ClickEvent, Button>(OpenRenameWindow, RenameButton);
+    }
+
+    private void LoadAnimation()
+    {
+        if (PainterScript == null)
+        {
+            return;
+        }
+        VisualTreeAsset AnimationInfo = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Painting Tool/UI/PaintAnimationItem.uxml");
+        VisualElement Frame = AnimationInfo.CloneTree();
+        AnimationList.Insert(AnimationList.childCount - 1, Frame);
+
+        Button Animationbutton = Frame.Q<Button>("AnimationButton");
+        Animationbutton.text = (AnimationList.IndexOf(Frame) + 1).ToString();
+        Animationbutton.RegisterCallback<ClickEvent, Button>(SelectAnimation, Animationbutton);
+        Button DeleteButton = Frame.Q<Button>("DeleteButton");
+        DeleteButton.RegisterCallback<ClickEvent, Button>(DeleteAnimation, DeleteButton);
+        Button LeftButton = Frame.Q<Button>("LeftButton");
+        LeftButton.RegisterCallback<ClickEvent, Button>(MoveAnimation, LeftButton);
+        Button RightButton = Frame.Q<Button>("RightButton");
+        RightButton.RegisterCallback<ClickEvent, Button>(MoveAnimation, RightButton);
+        UpdateAnimationLayers();
     }
 }
