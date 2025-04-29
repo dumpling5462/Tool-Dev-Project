@@ -894,12 +894,16 @@ public class PaintingToolEditor : EditorWindow
         }
         File.WriteAllBytes(path, pngImage);
     }
-
-    public void LoadImage()
+    public void SaveImage() 
     {
-
+        string path = EditorUtility.SaveFilePanel("Save Image","","UnityPaint","pain");
+        //string path = EditorUtility.SaveFolderPanel("Save File", "Saves", "UnityPaint");
+        Debug.Log(path);
+        if (string.IsNullOrEmpty(path))
+            return;
+        PaintFileSaver fileSaver = new PaintFileSaver();
+        fileSaver.CreateSave(path,width,height,PainterScript.SelectedAnimation,PainterScript.SelectedLayer,PainterScript.CanvasImage);
     }
-    public void SaveImage() { }
 
     private void MouseOver(PointerEnterEvent mouse)
     {
@@ -987,7 +991,7 @@ public class PaintingToolEditor : EditorWindow
 
     private void loadFileData()
     {
-        string path = EditorUtility.OpenFilePanel("Load Image","","png,jpg,jpeg");
+        string path = EditorUtility.OpenFilePanel("Load Image","","png,jpg,jpeg,pain,asset");
 
         if (string.IsNullOrEmpty(path))
         {

@@ -3,7 +3,7 @@ using UnityEditor.AssetImporters;
 using UnityEngine;
 using System.IO;
 
-[ScriptedImporter(100, "Pain")]
+[ScriptedImporter(100, "pain")]
 public class PaintFileImporter : ScriptedImporter
 {
     int width;
@@ -23,7 +23,7 @@ public class PaintFileImporter : ScriptedImporter
         PaintFile.animationIndex = int.Parse(tokens[2]);
         PaintFile.LayerIndex = int.Parse(tokens[3]);
         PaintFile.PaintData  = ParsePaintData(tokens[4]);
-          
+
         ctx.AddObjectToAsset("Unity Paint", PaintFile);
         ctx.SetMainObject(PaintFile);
     }
@@ -45,7 +45,7 @@ public class PaintFileImporter : ScriptedImporter
     {
         List<PaintingToolScript.PaintLayer> Canvas = new List<PaintingToolScript.PaintLayer>();
 
-        string[] tokens = animationData.Split(',', System.StringSplitOptions.RemoveEmptyEntries);
+        string[] tokens = animationData.Split('_', System.StringSplitOptions.RemoveEmptyEntries);
         foreach (string token in tokens)
         {
             Canvas.Add(ParseLayerData(token));
@@ -55,30 +55,34 @@ public class PaintFileImporter : ScriptedImporter
     private PaintingToolScript.PaintLayer ParseLayerData(string layerData)
     {
         PaintingToolScript.PaintLayer Layer = new PaintingToolScript.PaintLayer();
+
+        string[] tokens = layerData.Split('*', System.StringSplitOptions.RemoveEmptyEntries);
+        if (tokens.Length == 0) {
+            return Layer;
+        }
+
+        Layer.LayerName = tokens[0];
+        Layer.LayerVisible = bool.Parse(tokens[1]);
+        List<Color> colors = new List<Color>();
+
+        string[] PixelData = tokens[2].Split('-', System.StringSplitOptions.RemoveEmptyEntries);
+        Debug.Log(tokens[2]);
+        foreach (string token in PixelData)
+        {
+            if (token.Contains("RGBA"))
+            {
+                string ColorData = token.Substring(token.IndexOf('(')+1,token.IndexOf(')')-(token.IndexOf('(')+1));
+                UnityEngine.Debug.Log(ColorData);
+                string[] ColorValues = ColorData.Split(',', System.StringSplitOptions.RemoveEmptyEntries);
+                Color color = new Color(float.Parse(ColorValues[0]), float.Parse(ColorValues[1]), float.Parse(ColorValues[2]), float.Parse(ColorValues[3]));
+                colors.Add(color);
+            }
+        }
         Layer.LayerImage = new Texture2D(width,height);
-        //handle Layer Parse
-        byte[] data = ConvertLayerDataToByteArray(layerData);
-        Layer.LayerImage.LoadRawTextureData(data);
-        Layer.LayerImage.Compress(true);
+        Layer.LayerImage.SetPixels(colors.ToArray());
         Layer.LayerImage.Apply(updateMipmaps:false,makeNoLongerReadable: true);
 
         return Layer;
-    }
-
-    // A helper function that will split the data properly
-    private byte[] ConvertLayerDataToByteArray(string layerData)
-    {
-        // Assuming layerData is a string of byte values separated by '!' 
-        // You might need to adjust the split logic depending on your actual data format
-        string[] tokens = layerData.Split('!', System.StringSplitOptions.RemoveEmptyEntries);
-        byte[] byteArray = new byte[tokens.Length];
-
-        for (int i = 0; i < tokens.Length; i++)
-        {
-            byteArray[i] = byte.Parse(tokens[i]);
-        }
-
-        return byteArray;
     }
 
     private List<ChangesStack.Changes> ParseUndoStackData(string StackData)
