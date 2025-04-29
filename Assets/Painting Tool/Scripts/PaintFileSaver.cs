@@ -1,8 +1,5 @@
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using UnityEditor.U2D.Aseprite;
-using UnityEngine;
 
 public class PaintFileSaver
 {

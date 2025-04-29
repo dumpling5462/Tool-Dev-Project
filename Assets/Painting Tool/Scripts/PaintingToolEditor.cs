@@ -4,10 +4,6 @@ using UnityEngine.UIElements;
 using UnityEditor.ShortcutManagement;
 using UnityEditor.UIElements;
 using System.IO;
-using System;
-using UnityEngine.InputSystem;
-using UnityEngine.Rendering;
-using System.Collections.Generic;
 public class PaintingToolEditor : EditorWindow
 {
     private PaintingToolScript PainterScript;
@@ -31,7 +27,8 @@ public class PaintingToolEditor : EditorWindow
     public static void ShowMenuWindow()
     {
         PaintingToolEditor window = GetWindow<PaintingToolEditor>();
-        window.titleContent = new GUIContent("Pain Hub");
+        Texture Icon = AssetDatabase.LoadAssetAtPath<Texture>("Assets/Painting Tool/Icons/noose.png");
+        window.titleContent = new GUIContent("Pain Hub",Icon,"Funny Paint");
     }
     [MenuItem("Unity Paint/Help")]
     public static void ShowHelpWindow()
