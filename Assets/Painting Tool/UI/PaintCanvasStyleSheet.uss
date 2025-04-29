@@ -30,7 +30,7 @@ VisualElement {
 
 .PaintToolbutton {
     font-size: 80%;
-    justify-content: space-between;
+    justify-content: center;
     align-items: stretch;
     align-self: center;
     align-content: stretch;

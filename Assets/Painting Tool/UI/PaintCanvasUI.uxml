@@ -68,10 +68,18 @@
             <engine:VisualElement name="RightContainer" style="flex-grow: 1; width: 5%;">
                 <engine:VisualElement name="RightTopContainer" style="flex-grow: 1; height: 5%;" />
                 <engine:VisualElement name="BrushContainer" style="flex-grow: 1; flex-direction: column; flex-wrap: nowrap; width: auto; height: 95%; justify-content: flex-start; align-self: stretch; align-content: stretch; align-items: stretch;">
-                    <engine:Button text="Brush" name="BrushButton" class="button PaintToolbuttons PaintToolbutton" />
-                    <engine:Button text="Eraser" name="EraserButton" class="button PaintToolbuttons PaintToolbutton" />
-                    <engine:Button text="Eye Drop" name="EyeDropButton" class="PaintToolbuttons PaintToolbutton" />
-                    <engine:Button text="Fill" name="PaintBucketButton" class="PaintToolbuttons PaintToolbutton" />
+                    <engine:Button text="Brush" name="BrushButton" class="button PaintToolbuttons PaintToolbutton" style="background-image: none; justify-content: center;">
+                        <engine:VisualElement name="Icon" style="flex-grow: 1; justify-content: center; background-image: url(&quot;project://database/Assets/Painting%20Tool/Icons/Brush%20Icon.png?fileID=2800000&amp;guid=59c3026c8eb003147a577727f7354944&amp;type=3#Brush Icon&quot;); background-color: rgba(0, 0, 0, 0); -unity-background-scale-mode: scale-to-fit;" />
+                    </engine:Button>
+                    <engine:Button text="Eraser" name="EraserButton" class="button PaintToolbuttons PaintToolbutton">
+                        <engine:VisualElement name="Icon" style="flex-grow: 1;" />
+                    </engine:Button>
+                    <engine:Button text="Eye Drop" name="EyeDropButton" class="PaintToolbuttons PaintToolbutton">
+                        <engine:VisualElement name="Icon" style="flex-grow: 1;" />
+                    </engine:Button>
+                    <engine:Button text="Fill" name="PaintBucketButton" class="PaintToolbuttons PaintToolbutton">
+                        <engine:VisualElement name="Icon" style="flex-grow: 1;" />
+                    </engine:Button>
                 </engine:VisualElement>
             </engine:VisualElement>
         </engine:VisualElement>

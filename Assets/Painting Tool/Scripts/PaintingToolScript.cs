@@ -281,10 +281,12 @@ public class PaintingToolScript
             Vector2Int current = pixels.Dequeue();
             int CurrentX = current.x;
             int CurrentY = current.y;
-            if (x < 0 || x >= CanvasWidth || y < 0 || y >= CanvasHeight)
+            if (CurrentX < 0 || CurrentX >= CanvasWidth || CurrentY < 0 || CurrentY >= CanvasHeight)
                 continue;
 
             if (Layer.GetPixel(CurrentX, CurrentY) != ColorToFill)
+                continue;
+            if (Layer.GetPixel(CurrentX, CurrentY) == SelectedColour)
                 continue;
 
             Layer.SetPixel(CurrentX, CurrentY, SelectedColour);
