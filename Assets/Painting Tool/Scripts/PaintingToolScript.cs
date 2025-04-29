@@ -48,7 +48,7 @@ public class PaintingToolScript
     public BrushMode SelectedBrush = BrushMode.Paintbrush;
     public int BrushSize;
 
-    private readonly int Stacksize = 24;
+    private readonly int Stacksize = 32;
     private UndoRedoChangeStack UndoRedoStack;
 
     private bool firstUndo = true;
@@ -320,10 +320,12 @@ public class PaintingToolScript
             if (firstUndo)
             {
                 ChangesStack.Changes FirstChange = GetChange();
-                if (!FirstChange.Delete && !FirstChange.Added)
+                if (!FirstChange.Delete && !FirstChange.Added && !FirstChange.Move)
                 {
                     firstUndo = false;
                     UndoRedoStack.Redopush(FirstChange);
+                    //UndoRedoStack.pop(FirstChange);
+                    //UndoRedoStack.Redo.pop(null);
                 }
             }
         if (StoredUndoChange != null)
@@ -552,20 +554,26 @@ public class PaintingToolScript
                 if (change.SelectedLayer == -1)
                 {
                     //move animation
-                    List<PaintLayer> AnimationToMove = CanvasImage[change.NewIndex];
-                    CanvasImage.RemoveAt(change.NewIndex);
-                    CanvasImage.Insert(change.OldIndex, AnimationToMove);
+                    if (CanvasImage.Count > change.NewIndex)
+                    {
+                        List<PaintLayer> AnimationToMove = CanvasImage[change.NewIndex];
+                        CanvasImage.RemoveAt(change.NewIndex);
+                        CanvasImage.Insert(change.OldIndex, AnimationToMove);
+                    }
                 }
                 else
                 {
                     //move layer
                     foreach (List<PaintLayer> Frame in CanvasImage)
                     {
-                        PaintLayer LayerToMove = Frame[change.NewIndex];
-                        Frame.RemoveAt(change.NewIndex);
-                        Frame.Insert(change.OldIndex,LayerToMove);
+                        if (Frame.Count > change.NewIndex)
+                        {
+                            PaintLayer LayerToMove = Frame[change.NewIndex];
+                            Frame.RemoveAt(change.NewIndex);
+                            Frame.Insert(change.OldIndex, LayerToMove);
 
-                        LayerMoved?.Invoke(change.NewIndex,change.OldIndex);
+                            LayerMoved?.Invoke(change.NewIndex, change.OldIndex);
+                        }
                     }
                 }
             }
@@ -574,20 +582,26 @@ public class PaintingToolScript
                 if (change.SelectedLayer == -1)
                 {
                     //move animation
-                    List<PaintLayer> AnimationToMove = CanvasImage[change.OldIndex];
-                    CanvasImage.RemoveAt(change.OldIndex);
-                    CanvasImage.Insert(change.NewIndex, AnimationToMove);
+                    if (CanvasImage.Count > change.OldIndex)
+                    {
+                        List<PaintLayer> AnimationToMove = CanvasImage[change.OldIndex];
+                        CanvasImage.RemoveAt(change.OldIndex);
+                        CanvasImage.Insert(change.NewIndex, AnimationToMove);
+                    }
                 }
                 else
                 {
                     //move layer
                     foreach (List<PaintLayer> Frame in CanvasImage)
                     {
-                        PaintLayer LayerToMove = Frame[change.OldIndex];
-                        Frame.RemoveAt(change.OldIndex);
-                        Frame.Insert(change.NewIndex, LayerToMove);
+                        if (Frame.Count > change.OldIndex)
+                        {
+                            PaintLayer LayerToMove = Frame[change.OldIndex];
+                            Frame.RemoveAt(change.OldIndex);
+                            Frame.Insert(change.NewIndex, LayerToMove);
 
-                        LayerMoved?.Invoke(change.OldIndex, change.NewIndex);
+                            LayerMoved?.Invoke(change.OldIndex, change.NewIndex);
+                        }
                     }
                 }
             }

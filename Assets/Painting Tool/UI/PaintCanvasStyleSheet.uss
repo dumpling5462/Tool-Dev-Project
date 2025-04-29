@@ -32,7 +32,7 @@ VisualElement {
     font-size: 80%;
     justify-content: space-between;
     align-items: stretch;
-    align-self: stretch;
+    align-self: center;
     align-content: stretch;
     flex-direction: column;
     flex-grow: 0;
@@ -41,11 +41,11 @@ VisualElement {
     background-color: rgb(231, 231, 231);
     -unity-font-style: bold;
     margin-bottom: 5%;
-    width: auto;
-    height: auto;
+    width: 75%;
+    height: 8%;
     margin-top: 5px;
     color: rgb(0, 0, 0);
-    -unity-text-align: upper-center;
+    -unity-text-align: middle-center;
 }
 
 .PaintToolbutton:hover {
@@ -58,6 +58,10 @@ VisualElement {
 
 .PaintToolButtonSelected {
     background-color: rgb(67, 67, 67);
+    width: 75%;
+    height: 8%;
+    align-self: center;
+    -unity-text-align: middle-center;
 }
 
 .SwatchButtons {

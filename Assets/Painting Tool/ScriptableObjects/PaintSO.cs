@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "NewScriptableObjectScript", menuName = "Scriptable Objects/NewScriptableObjectScript")]
+[CreateAssetMenu(fileName = "PaintSO", menuName = "Scriptable Objects/NewScriptableObjectScript")]
 public class PaintSO : ScriptableObject
 {
     public int width;
@@ -10,7 +10,7 @@ public class PaintSO : ScriptableObject
     public int animationIndex;
     public int LayerIndex;
 
-    public List<List<PaintingToolScript.PaintLayer>> PaintAnimations;
+    public List<List<PaintingToolScript.PaintLayer>> PaintData;
 
-    public List<ChangesStack.Changes> UndoStack;
+    //public List<ChangesStack.Changes> UndoStack;
 }

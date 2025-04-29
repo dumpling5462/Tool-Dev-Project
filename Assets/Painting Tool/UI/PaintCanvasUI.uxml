@@ -13,7 +13,8 @@
         </engine:VisualElement>
         <engine:VisualElement name="BottomContainer" style="flex-grow: 1; flex-direction: row; height: 90%;">
             <engine:VisualElement name="LeftContainer" style="flex-grow: 1; width: 5%;">
-                <engine:VisualElement name="LeftTopContainer" style="flex-grow: 1; width: 100%; align-self: flex-start; flex-wrap: wrap; flex-direction: row; height: 80%;" />
+                <engine:VisualElement name="LeftTopContainer" style="flex-grow: 1; height: 5%;" />
+                <engine:VisualElement name="LeftMiddleContainer" style="flex-grow: 1; width: 100%; align-self: flex-start; flex-wrap: wrap; flex-direction: row; height: 75%;" />
                 <engine:VisualElement name="LeftBottomContainer" style="flex-grow: 1; flex-wrap: nowrap; flex-direction: column; height: 20%; align-self: center; justify-content: flex-start; align-content: auto; align-items: stretch;">
                     <engine:VisualElement name="HigherContainer" style="flex-grow: 1; align-items: flex-start; align-self: stretch; flex-direction: column; flex-wrap: nowrap; height: 65%; justify-content: flex-start; align-content: auto;">
                         <editor:ColorField value="#000000FF" show-eye-dropper="false" show-alpha="true" name="PrimaryColour" hdr="false" usage-hints="DynamicColor" class="ColourField" style="width: 30px; height: 30px;" />
@@ -26,8 +27,19 @@
             </engine:VisualElement>
             <engine:VisualElement name="CenterContainer" style="flex-grow: 1; width: 85%;">
                 <engine:VisualElement name="CenterTopContainer" style="flex-grow: 1; width: auto; height: 5%; flex-direction: row;">
-                    <engine:Button text="Undo" name="UndoButton" />
-                    <engine:Button text="Redo" name="RedoButton" />
+                    <engine:VisualElement name="CenterTopLeftContainer" style="flex-grow: 1; flex-direction: row;">
+                        <engine:Button text="Undo" name="UndoButton" />
+                        <engine:Button text="Redo" name="RedoButton" />
+                    </engine:VisualElement>
+                    <engine:VisualElement name="CenterTopMiddleContainer" style="flex-grow: 1; flex-direction: row;" />
+                    <engine:VisualElement name="CenterTopRightContainer" style="flex-grow: 1; flex-direction: row;">
+                        <engine:VisualElement name="CenterTopRightLeft" style="flex-grow: 1; width: 50%;" />
+                        <engine:VisualElement name="CenterTopRightRight" style="flex-grow: 1; flex-direction: row-reverse; width: 50%; justify-content: center; align-items: center; align-self: stretch; -unity-text-align: upper-center;">
+                            <engine:Button text="+" name="IncreaseBrush" style="-unity-font-style: bold;" />
+                            <engine:Label text="1" name="BrushText" style="align-items: center; align-self: center; justify-content: flex-end; -unity-font-style: bold; -unity-text-align: upper-center;" />
+                            <engine:Button text="-" name="DecreaseBrush" style="-unity-font-style: bold;" />
+                        </engine:VisualElement>
+                    </engine:VisualElement>
                 </engine:VisualElement>
                 <engine:VisualElement name="CenterMiddleContainer" style="flex-grow: 1; height: 75%;">
                     <engine:VisualElement name="DisplayTexture" style="flex-grow: 1; align-self: center; -unity-text-align: upper-center; border-left-color: rgba(0, 0, 0, 0.78); border-right-color: rgba(0, 0, 0, 0.78); border-top-color: rgba(0, 0, 0, 0.78); border-bottom-color: rgba(0, 0, 0, 0.78); border-top-width: 2px; border-right-width: 2px; border-bottom-width: 2px; border-left-width: 2px; align-content: auto; align-items: center; -unity-background-scale-mode: scale-to-fit; width: 100%; height: 100%; flex-basis: auto;" />
@@ -54,7 +66,8 @@
                 </engine:VisualElement>
             </engine:VisualElement>
             <engine:VisualElement name="RightContainer" style="flex-grow: 1; width: 5%;">
-                <engine:VisualElement name="BrushContainer" style="flex-grow: 1; flex-direction: column; flex-wrap: nowrap; width: auto; height: auto; justify-content: flex-start; align-self: stretch; align-content: stretch; align-items: stretch;">
+                <engine:VisualElement name="RightTopContainer" style="flex-grow: 1; height: 5%;" />
+                <engine:VisualElement name="BrushContainer" style="flex-grow: 1; flex-direction: column; flex-wrap: nowrap; width: auto; height: 95%; justify-content: flex-start; align-self: stretch; align-content: stretch; align-items: stretch;">
                     <engine:Button text="Brush" name="BrushButton" class="button PaintToolbuttons PaintToolbutton" />
                     <engine:Button text="Eraser" name="EraserButton" class="button PaintToolbuttons PaintToolbutton" />
                     <engine:Button text="Eye Drop" name="EyeDropButton" class="PaintToolbuttons PaintToolbutton" />

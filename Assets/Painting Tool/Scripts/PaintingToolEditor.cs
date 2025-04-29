@@ -24,6 +24,8 @@ public class PaintingToolEditor : EditorWindow
     bool paint=false;
     bool isMouseDown = false;
 
+    int brushSize = 1;
+
     [MenuItem("Unity Paint/Menu")]
     public static void ShowMenuWindow()
     {
@@ -130,6 +132,10 @@ public class PaintingToolEditor : EditorWindow
         root.Q<Button>("UndoButton").clicked+= UndoChange;
         root.Q<Button>("RedoButton").clicked+= RedoChange;
 
+        root.Q<Button>("IncreaseBrush").clicked += IncreaseBrushSize;
+        root.Q<Label>("BrushText").text = brushSize.ToString();
+        root.Q<Button>("DecreaseBrush").clicked += DecreaseBrushSize;
+
         VisualElement DisplayTex = root.Q<VisualElement>("DisplayTexture");
         DisplayTex.RegisterCallback<ClickEvent>(Paint);
         DisplayTex.RegisterCallback<PointerEnterEvent>(MouseOver);
@@ -152,6 +158,7 @@ public class PaintingToolEditor : EditorWindow
         PainterScript.VisibiltyChange += LayerVisibiltyChange;
 
         PainterScript.LayerMoved += MovedLayer;
+
     }
     private void MovedLayer(int OldIndex,int newIndex)
     {
@@ -308,7 +315,7 @@ public class PaintingToolEditor : EditorWindow
 
 
     [Shortcut("Painting Tool/IncreaseBrush", KeyCode.Equals)]
-    [Shortcut("Painting Tool/IncreaseBrush 2", KeyCode.RightCurlyBracket)]
+    [Shortcut("Painting Tool/IncreaseBrush 2", KeyCode.RightBracket)]
     private static void IncreaseBrushSizeShortcut()
     {
         Debug.Log("Increase");
@@ -321,9 +328,15 @@ public class PaintingToolEditor : EditorWindow
         {
             return;
         }
+        if (brushSize >= 1 && (brushSize < width || brushSize < height))
+        {
+            brushSize++;
+            PainterScript.BrushSize = brushSize;
+            rootVisualElement.Q<Label>("BrushText").text = brushSize.ToString();
+        }
     }
     [Shortcut("Painting Tool/DecreaseBrush", KeyCode.Minus)]
-    [Shortcut("Painting Tool/DecreaseBrush 2", KeyCode.LeftCurlyBracket)]
+    [Shortcut("Painting Tool/DecreaseBrush 2", KeyCode.LeftBracket)]
     private static void DecreaseBrushSizeShortcut()
     {
         SetEditorReference();
@@ -336,6 +349,18 @@ public class PaintingToolEditor : EditorWindow
         {  
             return; 
         }
+        if (brushSize > 1)
+        {
+            brushSize--;
+            PainterScript.BrushSize = brushSize;
+            rootVisualElement.Q<Label>("BrushText").text = brushSize.ToString();
+        }
+    }
+    [Shortcut("painting Tool/Undo Change",KeyCode.Z,ShortcutModifiers.Alt | ShortcutModifiers.Shift)]
+    private static void UndoChangeShortcut()
+    {
+        SetEditorReference();
+        EditorReference.UndoChange();
     }
     private void UndoChange()
     {
@@ -344,6 +369,12 @@ public class PaintingToolEditor : EditorWindow
             return;
         }
         PainterScript.Undo();
+    }
+    [Shortcut("painting Tool/Redo Change", KeyCode.Y, ShortcutModifiers.Alt | ShortcutModifiers.Shift)]
+    private static void RedoChangeShortcut()
+    {
+        SetEditorReference();
+        EditorReference.RedoChange();
     }
     private void RedoChange()
     {

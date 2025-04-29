@@ -26,11 +26,14 @@ public class UndoRedoChangeStack : ChangesStack
     public override Changes? pop(Changes? oldState)
     {
         Changes? change = base.pop(null);
-        if (change != null /*&& oldState != null*/)
+        if (change != null)
         {
-            //pushRedo((Changes)oldState);
             pushRedo(AssignChangeReferences(change.Value));
         }
+        //else if (oldState != null)
+        //{
+        //    pushRedo(AssignChangeReferences(oldState.Value));
+        //}
         return change;
     }
 
