@@ -4,6 +4,7 @@ using UnityEngine.UIElements;
 using UnityEditor.ShortcutManagement;
 using UnityEditor.UIElements;
 using System.IO;
+using UnityEditor.TerrainTools;
 public class PaintingToolEditor : EditorWindow
 {
     private PaintingToolScript PainterScript;
@@ -23,16 +24,26 @@ public class PaintingToolEditor : EditorWindow
 
     int brushSize = 1;
 
-    [MenuItem("Unity Paint/Menu")]
+    public enum PaintWindow
+    {
+        Paint,
+        Help
+    }
+
+    private static PaintWindow SelectedWindow = PaintWindow.Paint;
+
+    [MenuItem("Unity Paint/Paint Menu",false,0)]
     public static void ShowMenuWindow()
     {
+        SelectedWindow = PaintWindow.Paint;
         PaintingToolEditor window = GetWindow<PaintingToolEditor>();
-        Texture Icon = AssetDatabase.LoadAssetAtPath<Texture>("Assets/Painting Tool/Icons/noose.png");
+        Texture Icon = AssetDatabase.LoadAssetAtPath<Texture>("Assets/Painting Tool/Icons/Tool Icon.png");
         window.titleContent = new GUIContent("Pain Hub",Icon,"Funny Paint");
     }
-    [MenuItem("Unity Paint/Help")]
+    [MenuItem("Unity Paint/Help",false,10)]
     public static void ShowHelpWindow()
     {
+        SelectedWindow = PaintWindow.Help;
         PaintingToolEditor window = GetWindow<PaintingToolEditor>();
         window.titleContent = new GUIContent("Pls end my life");
     }
@@ -40,12 +51,22 @@ public class PaintingToolEditor : EditorWindow
     public void CreateGUI()
     { 
         VisualElement root = rootVisualElement;
-        VisualTreeAsset asset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Painting Tool/UI/PaintMenuUI.uxml");
-        asset.CloneTree(root);
-        StyleSheet sheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Painting Tool/UI/PaintMenuStyleSheet.uss");
-        root.styleSheets.Add(sheet);
-        root.Q<Button>("NewButton").clicked +=OpenCanvasSizeMenu;
-        root.Q<Button>("LoadButton").clicked += loadFileData;
+
+        if (SelectedWindow == PaintWindow.Paint)
+        {
+            VisualTreeAsset asset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Painting Tool/UI/PaintMenuUI.uxml");
+            asset.CloneTree(root);
+            StyleSheet sheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Painting Tool/UI/PaintMenuStyleSheet.uss");
+            root.styleSheets.Add(sheet);
+            root.Q<Button>("NewButton").clicked +=OpenCanvasSizeMenu;
+            root.Q<Button>("LoadButton").clicked += loadFileData;
+        }
+        else if (SelectedWindow == PaintWindow.Help)
+        {
+            VisualTreeAsset asset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Painting Tool/UI/HelpScreenUi.uxml");
+            asset.CloneTree(root);
+            root.Q<Button>("CloseMenu").clicked += () => { this.Close(); };
+        }
     }
 
     private void OpenCanvasSizeMenu()
@@ -851,24 +872,46 @@ public class PaintingToolEditor : EditorWindow
     public void ExportImage(ClickEvent clicked, VisualElement Popupwindow)
     {
         rootVisualElement.Remove(Popupwindow);
-        Texture2D ExportImage;
-        ExportImage = PainterScript.GetExportImage();
-        if (ExportImage == null)
-            return;
-        byte[] pngImage = ExportImage.EncodeToPNG();
-        DestroyImmediate(ExportImage);
-        if (pngImage == null)
-        {
-            Debug.Log("Can't export Image");
-            return;
-        }
+
         string path = EditorUtility.SaveFilePanel("save Image as PNG","","CoolPaint!","png");
         if (string.IsNullOrEmpty(path))
         {
             Debug.Log("Canceled save");
             return;
         }
-        File.WriteAllBytes(path, pngImage);
+        Texture2D ExportImage;
+        ExportImage = PainterScript.GetExportImage();
+        if (ExportImage == null)
+            return;
+        string extension = Path.GetExtension(path).ToLower();
+        byte[] EncodedImage;
+        EncodedImage = ExportImage.EncodeToPNG();
+        if (extension == ".png")
+        {
+            EncodedImage = ExportImage.EncodeToPNG();
+        }
+        else if(extension == ".jpg")
+        {
+            EncodedImage= ExportImage.EncodeToJPG();
+        }
+        else if (extension == ".jpeg")
+        {
+            EncodedImage = ExportImage.EncodeToJPG();
+        }
+        else
+        {
+            EncodedImage = ExportImage.EncodeToPNG();
+            Path.ChangeExtension(path, ".png");
+        }
+
+        DestroyImmediate(ExportImage);
+        if (EncodedImage == null)
+        {
+            Debug.Log("Can't export Image");
+            return;
+        }
+
+        File.WriteAllBytes(path, EncodedImage);
     }
     public void ExportSpriteSheet(ClickEvent clicked, VisualElement Popupwindow)
     {
