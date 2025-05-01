@@ -603,7 +603,7 @@ public class PaintingToolScript
                 }
             }
         }
-
+        UpdateDisplayImage();
     }
     public void AddedAnimation(int index)
     {

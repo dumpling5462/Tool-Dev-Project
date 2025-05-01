@@ -191,6 +191,7 @@ public class PaintingToolEditor : EditorWindow
     private void LayerVisibiltyChange(int index, bool visibilty)
     {
         LayerList[index].Q<Toggle>("Toggle").value = visibilty;
+        UpdateDisplayImage();
     }
     private void LayerNameChange(int index, string name)
     {
