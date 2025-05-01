@@ -9,6 +9,7 @@ public class PaintingToolEditor : EditorWindow
 {
     private PaintingToolScript PainterScript;
 
+    public Texture2D CursorImage;
     public Texture2D DisplayImage;
     public int height = 64;
     public int width = 64;
@@ -37,8 +38,8 @@ public class PaintingToolEditor : EditorWindow
     {
         SelectedWindow = PaintWindow.Paint;
         PaintingToolEditor window = GetWindow<PaintingToolEditor>();
-        Texture Icon = AssetDatabase.LoadAssetAtPath<Texture>("Assets/Painting Tool/Icons/Tool Icon.png");
-        window.titleContent = new GUIContent("Pain Hub",Icon,"Funny Paint");
+        Texture Icon = AssetDatabase.LoadAssetAtPath<Texture>("Assets/Painting Tool/UI/CoolPaint!.png");
+        window.titleContent = new GUIContent("Painting Tool",Icon,"Funny Paint");
     }
     [MenuItem("Unity Paint/Help",false,10)]
     public static void ShowHelpWindow()
@@ -230,6 +231,7 @@ public class PaintingToolEditor : EditorWindow
             return;
         }
         PainterScript.SelectedBrush = PaintingToolScript.BrushMode.Paintbrush;
+        //CursorImage = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Painting Tool/Cursors/BrushCursorIcon.png");
         UpdateVisual();
     }
     [Shortcut("Painting Tool/Eraser", KeyCode.H)]

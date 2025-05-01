@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public class PaintingToolScript
 {
@@ -955,7 +956,7 @@ public class PaintingToolScript
     public Texture2D GetExportImage()
     {
         Texture2D ExportTexture = new Texture2D(CanvasWidth, CanvasHeight);
-
+        FillTexture2D(ExportTexture);
         ExportTexture.filterMode = FilterMode.Point;
         if (CanvasImage[SelectedAnimation].Count > 1)
         {
@@ -971,7 +972,11 @@ public class PaintingToolScript
                     for (int x = 0; x < CanvasWidth; x++)
                     {
                         Color Pixel = layer.LayerImage.GetPixel(x, y);
-                        if (Pixel.a > 0 && layers.IndexOf(layer) != layers.Count-1)
+                        if (Pixel.a > 0)
+                        {
+                            ExportTexture.SetPixel(x, y, Pixel);
+                        }
+                        else if (layers.IndexOf(layer) != layers.Count - 1 && ExportTexture.GetPixel(x,y).a <= 0)
                         {
                             ExportTexture.SetPixel(x, y, Pixel);
                         }
