@@ -4,7 +4,6 @@ using UnityEngine.UIElements;
 using UnityEditor.ShortcutManagement;
 using UnityEditor.UIElements;
 using System.IO;
-using UnityEditor.TerrainTools;
 public class PaintingToolEditor : EditorWindow
 {
     private PaintingToolScript PainterScript;
@@ -39,6 +38,10 @@ public class PaintingToolEditor : EditorWindow
     [MenuItem("Unity Paint/Paint Menu",false,0)]
     public static void ShowMenuWindow()
     {
+        if (GetWindow<PaintingToolEditor>())
+        {
+            GetWindow<PaintingToolEditor>().Close();
+        }
         SelectedWindow = PaintWindow.Paint;
         PaintingToolEditor window = GetWindow<PaintingToolEditor>();
         Texture Icon = AssetDatabase.LoadAssetAtPath<Texture>("Assets/Painting Tool/UI/CoolPaint!.png");
@@ -47,9 +50,13 @@ public class PaintingToolEditor : EditorWindow
     [MenuItem("Unity Paint/Help",false,10)]
     public static void ShowHelpWindow()
     {
+        if (GetWindow<PaintingToolEditor>())
+        {
+            GetWindow<PaintingToolEditor>().Close();
+        }
         SelectedWindow = PaintWindow.Help;
         PaintingToolEditor window = GetWindow<PaintingToolEditor>();
-        window.titleContent = new GUIContent("Pls end my life");
+        window.titleContent = new GUIContent("Help");
     }
 
     public void CreateGUI()
@@ -674,6 +681,18 @@ public class PaintingToolEditor : EditorWindow
         Vector2 mousePosition = Clicked.position;
         Vector2 PaintPosition = CalculateOffset(mousePosition.x,mousePosition.y);
         PainterScript.PressedPixel((int)PaintPosition.x,(int)PaintPosition.y);
+        if (mirrorX)
+        {
+            PainterScript.PressedPixel((width-1) - (int)PaintPosition.x, (int)PaintPosition.y,false);
+        }
+        if (mirrorY)
+        {
+            PainterScript.PressedPixel((int)PaintPosition.x, (height-1)-(int)PaintPosition.y, false);
+        }
+        if (mirrorX && mirrorY)
+        {
+            PainterScript.PressedPixel((width-1)- (int)PaintPosition.x, (height-1) - (int)PaintPosition.y, false);
+        }
 
     }
 
@@ -974,6 +993,18 @@ public class PaintingToolEditor : EditorWindow
             Vector2 position = mouse.position;
             Vector2 PaintPosition = CalculateOffset(position.x, position.y);
             PainterScript.PressedPixel((int)PaintPosition.x, (int)PaintPosition.y,true);
+            if (mirrorX)
+            {
+                PainterScript.PressedPixel((width - 1) - (int)PaintPosition.x, (int)PaintPosition.y, false);
+            }
+            if (mirrorY)
+            {
+                PainterScript.PressedPixel((int)PaintPosition.x, (height - 1) - (int)PaintPosition.y, false);
+            }
+            if (mirrorX && mirrorY)
+            {
+                PainterScript.PressedPixel((width - 1) - (int)PaintPosition.x, (height - 1) - (int)PaintPosition.y, false);
+            }
             isPainting = false;
         }
         isMouseDown = false;
@@ -1003,6 +1034,18 @@ public class PaintingToolEditor : EditorWindow
         Vector2 position = mouse.position;
         Vector2 PaintPosition = CalculateOffset(position.x, position.y);
         PainterScript.PressedPixel((int)PaintPosition.x, (int)PaintPosition.y,true);
+            if (mirrorX)
+            {
+                PainterScript.PressedPixel((width - 1) - (int)PaintPosition.x, (int)PaintPosition.y, false);
+            }
+            if (mirrorY)
+            {
+                PainterScript.PressedPixel((int)PaintPosition.x, (height - 1) - (int)PaintPosition.y, false);
+            }
+            if (mirrorX && mirrorY)
+            {
+                PainterScript.PressedPixel((width - 1) - (int)PaintPosition.x, (height - 1) - (int)PaintPosition.y, false);
+            }
         }
     }
 
@@ -1324,3 +1367,21 @@ public class PaintingToolEditor : EditorWindow
 
     }
 }
+
+/*
+- export sprite sheet
+- play animations
+- add icons
+- overlay cursor
+- jpeg save option
+- overlay draw area
+- overlay underlying layer
+
+
+- make UI look decent
+-button tool tips
+
+- Load images in (handle load size)
+
+- zoom
+ */

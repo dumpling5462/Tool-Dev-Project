@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 public class PaintingToolScript
 {
@@ -162,7 +161,24 @@ public class PaintingToolScript
                         Color Pixel = layer.LayerImage.GetPixel(x, y);
                         if (Pixel.a > 0)
                         {
-                            DisplayImage.SetPixel(x, y, Pixel);
+                            if (Pixel.a < 1 && DisplayImage.GetPixel(x,y).a > 0 && Pixel.a > 0)
+                            {
+                                Color Blendedcolor = new Color();
+                                //Blendedcolor = (Pixel + DisplayImage.GetPixel(x, y));
+                                Color UnderlayColor = DisplayImage.GetPixel(x, y);
+                                Blendedcolor.r = Pixel.r * Pixel.a;
+                                Blendedcolor.g = Pixel.g * Pixel.a;
+                                Blendedcolor.b = Pixel.b * Pixel.a;
+                                Blendedcolor.r += (1 - Pixel.a) * UnderlayColor.r * UnderlayColor.a;
+                                Blendedcolor.g += (1 - Pixel.a) * UnderlayColor.g * UnderlayColor.a;
+                                Blendedcolor.b += (1 - Pixel.a) * UnderlayColor.b * UnderlayColor.a;
+                                Blendedcolor.a = UnderlayColor.a * (1-Pixel.a) + Pixel.a;
+                                DisplayImage.SetPixel(x, y, Blendedcolor);
+                            }
+                            else
+                            {
+                                DisplayImage.SetPixel(x, y, Pixel);
+                            }
                         }
                     }
                 }
@@ -227,8 +243,7 @@ public class PaintingToolScript
             return;
         if (x < 0 || x >= CanvasWidth || y < 0 || y >= CanvasHeight)
             return;
-        if (!Painting)
-            ChangeMade();
+
         switch (SelectedBrush)
         {
             case BrushMode.Paintbrush:
@@ -254,6 +269,7 @@ public class PaintingToolScript
     }
 
 
+
     private void PaintPixel(int x,int y,Color selectedColour)
     {
         //CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.SetPixel(x,y,selectedColour);
@@ -272,7 +288,7 @@ public class PaintingToolScript
             {
                 Offset = 1;
             }
-    
+
             for (int Py = -BrushRadius + Offset; Py <= BrushRadius; Py++)
             {
                 for (int Px = -BrushRadius; Px <= BrushRadius - Offset; Px++)
@@ -309,6 +325,7 @@ public class PaintingToolScript
             }
         }
     }
+  
     private void EyeDropper(int x, int y)
     {
         foreach (PaintLayer Layer in CanvasImage[SelectedAnimation])
@@ -1033,7 +1050,24 @@ public class PaintingToolScript
                         Color Pixel = layer.LayerImage.GetPixel(x, y);
                         if (Pixel.a > 0)
                         {
-                            ExportTexture.SetPixel(x, y, Pixel);
+                            if (Pixel.a < 1 && ExportTexture.GetPixel(x, y).a > 0 && Pixel.a > 0)
+                            {
+                                Color Blendedcolor = new Color();
+                                //Blendedcolor = (Pixel + DisplayImage.GetPixel(x, y));
+                                Color UnderlayColor = ExportTexture.GetPixel(x, y);
+                                Blendedcolor.r = Pixel.r * Pixel.a;
+                                Blendedcolor.g = Pixel.g * Pixel.a;
+                                Blendedcolor.b = Pixel.b * Pixel.a;
+                                Blendedcolor.r += (1 - Pixel.a) * UnderlayColor.r * UnderlayColor.a;
+                                Blendedcolor.g += (1 - Pixel.a) * UnderlayColor.g * UnderlayColor.a;
+                                Blendedcolor.b += (1 - Pixel.a) * UnderlayColor.b * UnderlayColor.a;
+                                Blendedcolor.a = UnderlayColor.a * (1 - Pixel.a) + Pixel.a;
+                                ExportTexture.SetPixel(x, y, Blendedcolor);
+                            }
+                            else
+                            {
+                                ExportTexture.SetPixel(x, y, Pixel);
+                            }
                         }
                         else if (layers.IndexOf(layer) != layers.Count - 1 && ExportTexture.GetPixel(x,y).a <= 0)
                         {
