@@ -42,7 +42,7 @@ public class PaintingToolScript
 
     public Color SelectedColour = new Color(1,1,1,1);
     public BrushMode SelectedBrush = BrushMode.Paintbrush;
-    public int BrushSize;
+    public int BrushSize = 1;
 
     private readonly int Stacksize = 32;
     private UndoRedoChangeStack UndoRedoStack;
@@ -221,7 +221,7 @@ public class PaintingToolScript
     }
     public void PressedPixel(int x, int y, bool Painting)
     {
-        if ((CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.GetPixel(x, y) == SelectedColour && SelectedBrush != BrushMode.Eraser) || (CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.GetPixel(x, y) == new Color(0, 0, 0, 0) && SelectedBrush == BrushMode.Eraser))
+        if ((CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.GetPixel(x, y) == SelectedColour && SelectedBrush != BrushMode.Eraser && BrushSize > 1) || (CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.GetPixel(x, y) == new Color(0, 0, 0, 0) && SelectedBrush == BrushMode.Eraser && BrushSize >1))
             return;
         if (x < 0 || x >= CanvasWidth || y < 0 || y >= CanvasHeight)
             return;
@@ -254,15 +254,67 @@ public class PaintingToolScript
 
     private void PaintPixel(int x,int y,Color selectedColour)
     {
-        CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.SetPixel(x,y,selectedColour);
+        //CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.SetPixel(x,y,selectedColour);
+        float Radi = BrushSize / 2.0f;
+        int BrushRadius = Mathf.FloorToInt(Radi);
+
+        int Offset = 0;
+        if (Radi % 1 > 0)
+        {
+            Debug.Log("Float");
+            Offset = 0;
+        }
+        else
+        {
+            Offset = 1;
+        }
+
+        for (int Py = -BrushRadius + Offset; Py <= BrushRadius; Py++)
+        {
+            for (int Px = -BrushRadius; Px <= BrushRadius - Offset; Px++)
+            {
+                int yy = y + Py;
+                int xx = x + Px;
+                if (yy < 0 || yy >= CanvasHeight || xx < 0 || xx >= CanvasWidth)
+                    continue;
+                CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.SetPixel(xx, yy, selectedColour);
+            }
+        }
+
+        //BrushRadius = Mathf.CeilToInt(Radi); 
+
+        //for (int py = -BrushRadius; py <= BrushRadius; py++)
+        //{
+        //    for (int px = -BrushRadius; px <= BrushRadius; px++)
+        //    {
+
+        //         int xx = x + px;
+        //         int yy = y + py;
+
+        //        float distance =Mathf.Sqrt(Mathf.Pow((x-xx),2) + Mathf.Pow((y-yy),2));
+        //        if (Mathf.Abs(distance) > Radi)
+        //            continue;
+
+        //         if (yy < 0 || yy >= CanvasHeight || xx < 0 || xx >= CanvasWidth)
+        //             continue;
+
+        //         CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.SetPixel(xx, yy, selectedColour);        
+        //    }
+        //}
     }
     private void EyeDropper(int x, int y)
     {
-        Color newColor = GetPixel(x,y);
-        if (newColor.a > 0)
+        foreach (PaintLayer Layer in CanvasImage[SelectedAnimation])
         {
-            SelectedColour = newColor;
-            ColourChange?.Invoke();
+            if (!Layer.LayerVisible)
+                continue;
+            Color newColor = Layer.LayerImage.GetPixel(x, y);
+            if (newColor.a > 0)
+            {
+                SelectedColour = newColor;
+                ColourChange?.Invoke();
+                return;
+            }
         }
     }
     private void Fill(int x, int y, Color ColorToFill)
