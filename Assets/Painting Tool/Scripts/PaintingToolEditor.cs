@@ -23,6 +23,9 @@ public class PaintingToolEditor : EditorWindow
     bool paint=false;
     bool isMouseDown = false;
 
+    bool mirrorX = false;
+    bool mirrorY = false;
+
     int brushSize = 1;
 
     public enum PaintWindow
@@ -105,6 +108,7 @@ public class PaintingToolEditor : EditorWindow
         UpdateAnimationButtons();
         UpdateLayerButtons();
         Brush();
+        SetCircleBrush();
 
         DisplayImage = PainterScript.GetDisplayImage();
         VisualElement Image = root.Q<VisualElement>("DisplayTexture");
@@ -151,6 +155,12 @@ public class PaintingToolEditor : EditorWindow
 
         root.Q<Button>("UndoButton").clicked+= UndoChange;
         root.Q<Button>("RedoButton").clicked+= RedoChange;
+
+        root.Q<Button>("MirrorY").clicked += MirrorY;
+        root.Q<Button>("MirrorX").clicked += MirrorX;
+
+        root.Q<Button>("SquareBrush").clicked += SetSquareBrush;
+        root.Q<Button>("CircleBrush").clicked += SetCircleBrush;
 
         root.Q<Button>("IncreaseBrush").clicked += IncreaseBrushSize;
         root.Q<Label>("BrushText").text = brushSize.ToString();
@@ -1111,6 +1121,7 @@ public class PaintingToolEditor : EditorWindow
         UpdateAnimationButtons();
         UpdateLayerButtons();
         Brush();
+        SetCircleBrush();
 
         DisplayImage = PainterScript.GetDisplayImage();
         VisualElement Image = root.Q<VisualElement>("DisplayTexture");
@@ -1178,6 +1189,7 @@ public class PaintingToolEditor : EditorWindow
         UpdateAnimationButtons();
         UpdateLayerButtons();
         Brush();
+        SetCircleBrush();
 
         DisplayImage = PainterScript.GetDisplayImage();
         VisualElement Image = root.Q<VisualElement>("DisplayTexture");
@@ -1235,5 +1247,80 @@ public class PaintingToolEditor : EditorWindow
         Button RightButton = Frame.Q<Button>("RightButton");
         RightButton.RegisterCallback<ClickEvent, Button>(MoveAnimation, RightButton);
         UpdateAnimationLayers();
+    }
+
+
+    private void SetSquareBrush()
+    {
+        PainterScript.SquareBrush = true;
+
+        VisualElement root = rootVisualElement;
+
+        Button Square = root.Q<Button>("SquareBrush");
+        Button Circle = root.Q<Button>("CircleBrush");
+        
+        
+
+        if (Square.ClassListContains("layerButton"))
+        {
+            Square.RemoveFromClassList("layerButton");
+            Square.AddToClassList("layerButtonSelected");
+            Circle.RemoveFromClassList("layerButtonSelected");
+            Circle.AddToClassList("layerButton");
+        }
+    }
+    private void SetCircleBrush()
+    {
+        PainterScript.SquareBrush = false;
+
+        VisualElement root = rootVisualElement;
+
+        Button Square = root.Q<Button>("SquareBrush");
+        Button Circle = root.Q<Button>("CircleBrush");
+
+
+
+        if (Circle.ClassListContains("layerButton"))
+        {
+            Circle.RemoveFromClassList("layerButton");
+            Circle.AddToClassList("layerButtonSelected");
+            Square.RemoveFromClassList("layerButtonSelected");
+            Square.AddToClassList("layerButton");
+        }
+    }
+    private void MirrorX()
+    {
+        VisualElement root = rootVisualElement;
+        Button Mirror = root.Q<Button>("MirrorX");
+        if (mirrorX == true)
+        {
+            mirrorX = false;
+            Mirror.RemoveFromClassList("layerButtonSelected");
+            Mirror.AddToClassList("layerButton");
+        }
+        else
+        {
+            mirrorX = true;
+            Mirror.RemoveFromClassList("layerButton");
+            Mirror.AddToClassList("layerButtonSelected");
+        }
+    }
+    private void MirrorY()
+    {
+        VisualElement root = rootVisualElement;
+        Button Mirror = root.Q<Button>("MirrorY");
+        if (mirrorY == true)
+        {
+            mirrorY = false;
+            Mirror.RemoveFromClassList("layerButtonSelected");
+            Mirror.AddToClassList("layerButton");
+        }
+        else
+        {
+            mirrorY = true;
+            Mirror.RemoveFromClassList("layerButton");
+            Mirror.AddToClassList("layerButtonSelected");
+        }
+
     }
 }

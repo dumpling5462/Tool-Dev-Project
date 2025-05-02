@@ -50,7 +50,9 @@ public class PaintingToolScript
     private bool firstUndo = true;
     private ChangesStack.Changes? StoredUndoChange;
 
-    private bool IsPerformingUndoRedo = false;
+    private bool isUndoRedo = false;
+
+    public bool SquareBrush = false;
 
     public void Initialize(int width, int height)
     {
@@ -78,7 +80,7 @@ public class PaintingToolScript
             }
         }
         CanvasImage.Add(Animation);
-        if (!IsPerformingUndoRedo && CanvasImage.Count > 1)
+        if (!isUndoRedo && CanvasImage.Count > 1)
         {
             AddedMade(-1, CanvasImage.Count - 1);
         }
@@ -95,7 +97,7 @@ public class PaintingToolScript
             FillTexture2D(layer.LayerImage);
             Frame.Add(layer);
         }
-        if (!IsPerformingUndoRedo && CanvasImage[SelectedAnimation].Count > 1)
+        if (!isUndoRedo && CanvasImage[SelectedAnimation].Count > 1)
         {
             AddedMade(CanvasImage[0].Count-1,-1);
         }
@@ -221,7 +223,7 @@ public class PaintingToolScript
     }
     public void PressedPixel(int x, int y, bool Painting)
     {
-        if ((CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.GetPixel(x, y) == SelectedColour && SelectedBrush != BrushMode.Eraser && BrushSize > 1) || (CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.GetPixel(x, y) == new Color(0, 0, 0, 0) && SelectedBrush == BrushMode.Eraser && BrushSize >1))
+        if ((CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.GetPixel(x, y) == SelectedColour && SelectedBrush != BrushMode.Eraser && BrushSize <= 1) || (CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.GetPixel(x, y) == new Color(0, 0, 0, 0) && SelectedBrush == BrushMode.Eraser && BrushSize <= 1))
             return;
         if (x < 0 || x >= CanvasWidth || y < 0 || y >= CanvasHeight)
             return;
@@ -258,49 +260,54 @@ public class PaintingToolScript
         float Radi = BrushSize / 2.0f;
         int BrushRadius = Mathf.FloorToInt(Radi);
 
-        int Offset = 0;
-        if (Radi % 1 > 0)
+        if (SquareBrush)
         {
-            Debug.Log("Float");
-            Offset = 0;
-        }
-        else
-        {
-            Offset = 1;
-        }
-
-        for (int Py = -BrushRadius + Offset; Py <= BrushRadius; Py++)
-        {
-            for (int Px = -BrushRadius; Px <= BrushRadius - Offset; Px++)
+            int Offset = 0;
+            if (Radi % 1 > 0)
             {
-                int yy = y + Py;
-                int xx = x + Px;
-                if (yy < 0 || yy >= CanvasHeight || xx < 0 || xx >= CanvasWidth)
-                    continue;
-                CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.SetPixel(xx, yy, selectedColour);
+                Debug.Log("Float");
+                Offset = 0;
+            }
+            else
+            {
+                Offset = 1;
+            }
+    
+            for (int Py = -BrushRadius + Offset; Py <= BrushRadius; Py++)
+            {
+                for (int Px = -BrushRadius; Px <= BrushRadius - Offset; Px++)
+                {
+                    int yy = y + Py;
+                    int xx = x + Px;
+                    if (yy < 0 || yy >= CanvasHeight || xx < 0 || xx >= CanvasWidth)
+                        continue;
+                    CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.SetPixel(xx, yy, selectedColour);
+                }
             }
         }
+        else if (!SquareBrush)
+        {
+            BrushRadius = Mathf.CeilToInt(Radi);
 
-        //BrushRadius = Mathf.CeilToInt(Radi); 
+            for (int py = -BrushRadius; py <= BrushRadius; py++)
+            {
+                for (int px = -BrushRadius; px <= BrushRadius; px++)
+                {
 
-        //for (int py = -BrushRadius; py <= BrushRadius; py++)
-        //{
-        //    for (int px = -BrushRadius; px <= BrushRadius; px++)
-        //    {
+                    int xx = x + px;
+                    int yy = y + py;
 
-        //         int xx = x + px;
-        //         int yy = y + py;
+                    float distance = Mathf.Sqrt(Mathf.Pow((x - xx), 2) + Mathf.Pow((y - yy), 2));
+                    if (Mathf.Abs(distance) > Radi)
+                        continue;
 
-        //        float distance =Mathf.Sqrt(Mathf.Pow((x-xx),2) + Mathf.Pow((y-yy),2));
-        //        if (Mathf.Abs(distance) > Radi)
-        //            continue;
+                    if (yy < 0 || yy >= CanvasHeight || xx < 0 || xx >= CanvasWidth)
+                        continue;
 
-        //         if (yy < 0 || yy >= CanvasHeight || xx < 0 || xx >= CanvasWidth)
-        //             continue;
-
-        //         CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.SetPixel(xx, yy, selectedColour);        
-        //    }
-        //}
+                    CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.SetPixel(xx, yy, selectedColour);
+                }
+            }
+        }
     }
     private void EyeDropper(int x, int y)
     {
@@ -365,7 +372,7 @@ public class PaintingToolScript
     {
         if (!UndoRedoStack.isEmpty())
         {
-        IsPerformingUndoRedo = true;
+        isUndoRedo = true;
         ChangesStack.Changes? CurrentChange = null;
             if (firstUndo)
             {
@@ -391,27 +398,27 @@ public class PaintingToolScript
         {
             ApplyChange((ChangesStack.Changes)CurrentChange,false);
         }
-        IsPerformingUndoRedo = false;
+        isUndoRedo = false;
         }
     }
     public void Redo()
     {
         if (!UndoRedoStack.Redo.isEmpty())
         {
-        IsPerformingUndoRedo = true;
+        isUndoRedo = true;
             ChangesStack.Changes? CurrentChange = UndoRedoStack.Redopop();
             UndoRedoStack.Redopush(CurrentChange.Value);
         if (CurrentChange != null)
         {
             ApplyChange((ChangesStack.Changes)CurrentChange,true);
         }
-        IsPerformingUndoRedo = false;
+        isUndoRedo = false;
         }
     }
     public void ChangeMade()
     {
         UnityEngine.Debug.Log("ChangeMade");
-        if (IsPerformingUndoRedo)
+        if (isUndoRedo)
         {
             return;
         }
@@ -677,7 +684,7 @@ public class PaintingToolScript
 
     public void UpdateSelectedLayer(int NewLayerIndex, bool? dochange)
     {
-        if(IsPerformingUndoRedo)
+        if(isUndoRedo)
                 ChangeMade();
         if (NewLayerIndex >= CanvasImage[0].Count || NewLayerIndex < 0 || NewLayerIndex == SelectedLayer)
             return;
@@ -688,7 +695,7 @@ public class PaintingToolScript
 
     public void UpdateSelectedAnimation(int NewAnimationIndex,bool? dochange)
     {
-        if(IsPerformingUndoRedo)
+        if(isUndoRedo)
             ChangeMade();
         if (NewAnimationIndex >= CanvasImage.Count || NewAnimationIndex < 0 || NewAnimationIndex == SelectedAnimation)
             return;
@@ -773,7 +780,7 @@ public class PaintingToolScript
 
     public void DeleteMade(int LayerIndex,int AnimationIndex)
     {
-        if (IsPerformingUndoRedo)
+        if (isUndoRedo)
             return;
             ChangesStack.Changes DeleteChange;
         DeleteChange = new ChangesStack.Changes();
@@ -814,7 +821,7 @@ public class PaintingToolScript
     }
     public void AddedMade(int LayerIndex, int AnimationIndex)
     {
-        if (IsPerformingUndoRedo)
+        if (isUndoRedo)
             return;
         ChangesStack.Changes AddedChange;
         AddedChange = new ChangesStack.Changes();
@@ -909,7 +916,7 @@ public class PaintingToolScript
 
     public void LayerChange(int NewIndex, int OldIndex,bool Layer)
     {
-        if (IsPerformingUndoRedo)
+        if (isUndoRedo)
             return;
         ChangesStack.Changes LayerChange = new ChangesStack.Changes();
 
