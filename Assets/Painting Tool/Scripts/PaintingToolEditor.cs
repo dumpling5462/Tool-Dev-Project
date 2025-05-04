@@ -4,6 +4,9 @@ using UnityEngine.UIElements;
 using UnityEditor.ShortcutManagement;
 using UnityEditor.UIElements;
 using System.IO;
+using System;
+using System.Collections;
+using Unity.VisualScripting;
 public class PaintingToolEditor : EditorWindow
 {
     private PaintingToolScript PainterScript;
@@ -24,6 +27,9 @@ public class PaintingToolEditor : EditorWindow
 
     bool mirrorX = false;
     bool mirrorY = false;
+
+    bool AnimPlaying = false;
+    float AnimSpeed = 1.0f;
 
     int brushSize = 1;
 
@@ -172,6 +178,13 @@ public class PaintingToolEditor : EditorWindow
         root.Q<Button>("IncreaseBrush").clicked += IncreaseBrushSize;
         root.Q<Label>("BrushText").text = brushSize.ToString();
         root.Q<Button>("DecreaseBrush").clicked += DecreaseBrushSize;
+
+        root.Q<Button>("PlayButton").clicked += PlayAnimation;
+        root.Q<Button>("StopButton").clicked += StopAnimation;
+
+        FloatField AnimationSpeedField = root.Q<FloatField>("AnimationSpeed");
+        AnimationSpeedField.value = AnimSpeed;
+        AnimationSpeedField.RegisterValueChangedCallback(SpeedChange => { AnimSpeed = SpeedChange.newValue; });
 
         VisualElement DisplayTex = root.Q<VisualElement>("DisplayTexture");
         DisplayTex.RegisterCallback<ClickEvent>(Paint);
@@ -395,7 +408,7 @@ public class PaintingToolEditor : EditorWindow
             rootVisualElement.Q<Label>("BrushText").text = brushSize.ToString();
         }
     }
-    [Shortcut("painting Tool/Undo Change",KeyCode.Z,ShortcutModifiers.Alt | ShortcutModifiers.Shift)]
+    [Shortcut("Painting Tool/Undo Change",KeyCode.Z,ShortcutModifiers.Alt | ShortcutModifiers.Shift)]
     private static void UndoChangeShortcut()
     {
         SetEditorReference();
@@ -407,9 +420,14 @@ public class PaintingToolEditor : EditorWindow
         {
             return;
         }
+        if (AnimPlaying)
+        {
+            StopAnimation();
+            return;
+        }
         PainterScript.Undo();
     }
-    [Shortcut("painting Tool/Redo Change", KeyCode.Y, ShortcutModifiers.Alt | ShortcutModifiers.Shift)]
+    [Shortcut("Painting Tool/Redo Change", KeyCode.Y, ShortcutModifiers.Alt | ShortcutModifiers.Shift)]
     private static void RedoChangeShortcut()
     {
         SetEditorReference();
@@ -421,12 +439,22 @@ public class PaintingToolEditor : EditorWindow
         {
             return;
         }
+        if (AnimPlaying)
+        {
+            StopAnimation();
+            return;
+        }
         PainterScript.Redo();
     }
     private void AddAnimation()
     {
         if (PainterScript == null)
         {
+            return;
+        }
+        if (AnimPlaying)
+        {
+            StopAnimation();
             return;
         }
         VisualTreeAsset AnimationInfo = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Painting Tool/UI/PaintAnimationItem.uxml");
@@ -448,6 +476,13 @@ public class PaintingToolEditor : EditorWindow
 
     private void AddAnimationAtIndex(int index)
     {
+        if (PainterScript == null)
+            return;
+        if (AnimPlaying)
+        {
+            StopAnimation();
+            return;
+        }
         VisualTreeAsset AnimationInfo = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Painting Tool/UI/PaintAnimationItem.uxml");
         VisualElement Frame = AnimationInfo.CloneTree();
         AnimationList.Insert(AnimationList.childCount - 1, Frame);
@@ -467,6 +502,13 @@ public class PaintingToolEditor : EditorWindow
 
     private void AddLayerAtIndex(int index,PaintingToolScript.PaintLayer LayerData)
     {
+        if (PainterScript == null)
+            return;
+        if (AnimPlaying)
+        {
+            StopAnimation();
+            return;
+        }
         VisualTreeAsset LayerInfo = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Painting Tool/UI/PaintLayerItem.uxml");
         VisualElement Layer = LayerInfo.CloneTree();
         LayerList.Insert(index, Layer);
@@ -509,7 +551,13 @@ public class PaintingToolEditor : EditorWindow
     }
     private void RemoveAnimationAtIndex(int index)
     {
-        Debug.Log("delete anim");
+        if (PainterScript == null)
+            return;
+        if (AnimPlaying)
+        {
+            StopAnimation();
+            return;
+        }
         if (PainterScript.DeleteAnimation(index))
         {
             AnimationList.RemoveAt(AnimationList.childCount-2);
@@ -519,16 +567,37 @@ public class PaintingToolEditor : EditorWindow
 
     private void DeleteAnimation(ClickEvent click,Button AnimationToDelete)
     {
+        if (PainterScript == null)
+            return;
+        if (AnimPlaying)
+        {
+            StopAnimation();
+            return;
+        }
         RemoveAnimationAtIndex(AnimationList.IndexOf(FindChild(AnimationList,AnimationToDelete)));
         UpdateAnimationButtons();
     }
     private void DeleteLayer(ClickEvent click,Button LayerToDelete)
     {
+        if (PainterScript == null)
+            return;
+        if (AnimPlaying)
+        {
+            StopAnimation();
+            return;
+        }
         RemoveLayerAtIndex(LayerList.IndexOf(FindChild(LayerList,LayerToDelete)));
         UpdateLayerButtons();
     }
     private void SelectAnimationAndFrame(ClickEvent click,Button button)
     {
+        if (PainterScript == null)
+            return;
+        if (AnimPlaying)
+        {
+            StopAnimation();
+            return;
+        }
         foreach (ScrollView LayerFrame in AnimationList.Query<ScrollView>("Layers").ToList())
         {
             if (LayerFrame.Contains(button))
@@ -541,7 +610,14 @@ public class PaintingToolEditor : EditorWindow
     }
     private void UpdateAnimationLayers()
     {
-        foreach(ScrollView LayerData in AnimationList.Query<ScrollView>("Layers").ToList())
+        if (PainterScript == null)
+            return;
+        if (AnimPlaying)
+        {
+            StopAnimation();
+            return;
+        }
+        foreach (ScrollView LayerData in AnimationList.Query<ScrollView>("Layers").ToList())
         { 
              while (LayerData.childCount < LayerList.childCount-1)
              {
@@ -557,14 +633,27 @@ public class PaintingToolEditor : EditorWindow
 
     private void ToggleVisibilty(ClickEvent clicked, Toggle ToggleButton)
     {
+        if (PainterScript == null)
+            return;
+        if (AnimPlaying)
+        {
+            StopAnimation();
+            return;
+        }
         int index = LayerList.IndexOf(FindChild(LayerList, ToggleButton));
-        UnityEngine.Debug.Log(index);
         PainterScript.UpdateVisibilty(index,ToggleButton.value);
         
 
     }
     private void OpenRenameWindow(ClickEvent clicked,Button button)
     {
+        if (PainterScript == null)
+            return;
+        if (AnimPlaying)
+        {
+            StopAnimation();
+            return;
+        }
         int index = LayerList.IndexOf(FindChild(LayerList,button));
 
         VisualElement root = rootVisualElement;
@@ -601,6 +690,13 @@ public class PaintingToolEditor : EditorWindow
 
     private void RenamedLayer(ClickEvent clicked, VisualElement PopupWindow)
     {
+        if (PainterScript == null)
+            return;
+        if (AnimPlaying)
+        {
+            StopAnimation();
+            return;
+        }
         TextField textfield = PopupWindow.Q<TextField>();
         int index = int.Parse(textfield.name);
         textfield.label = index.ToString();
@@ -614,6 +710,13 @@ public class PaintingToolEditor : EditorWindow
 
     private void SelectLayer(ClickEvent Clicked, Button LayerButton)
     {
+        if (PainterScript == null)
+            return;
+        if (AnimPlaying)
+        {
+            StopAnimation();
+            return;
+        }
         int index = LayerList.IndexOf(FindChild(LayerList,LayerButton));
         if (index >= 0 && index < PainterScript.CanvasImage[0].Count)
         {
@@ -632,7 +735,10 @@ public class PaintingToolEditor : EditorWindow
     private void AddLayer()
     {
         if (PainterScript == null)
+            return;
+        if (AnimPlaying)
         {
+            StopAnimation();
             return;
         }
         VisualTreeAsset LayerInfo = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Painting Tool/UI/PaintLayerItem.uxml");
@@ -671,7 +777,10 @@ public class PaintingToolEditor : EditorWindow
     private void Paint(ClickEvent Clicked)
     {
         if (PainterScript == null)
+            return;
+        if (AnimPlaying)
         {
+            StopAnimation();
             return;
         }
         if (!paint)
@@ -752,7 +861,10 @@ public class PaintingToolEditor : EditorWindow
     private void UpdateColour()
     {
         if (PainterScript == null)
+            return;
+        if (AnimPlaying)
         {
+            StopAnimation();
             return;
         }
         PrimaryColor = PainterScript.SelectedColour;
@@ -779,7 +891,7 @@ public class PaintingToolEditor : EditorWindow
 
     }
     private void UpdateFrameLayers()
-    {
+    {   
         foreach (ScrollView Layers in AnimationList.Query<ScrollView>("Layers").ToList())
         {
             foreach (Button LayerButton in Layers.Query<Button>("AnimationLayer").ToList())
@@ -816,6 +928,13 @@ public class PaintingToolEditor : EditorWindow
     }
     private void MoveLayer(ClickEvent click, Button button)
     {
+        if (PainterScript == null)
+            return;
+        if (AnimPlaying)
+        {
+            StopAnimation();
+            return;
+        }
         VisualElement OuterLayerElement = FindChild(LayerList,button);
         if (button.name == "UpButton")
         {
@@ -850,6 +969,13 @@ public class PaintingToolEditor : EditorWindow
     }
     private void MoveAnimation(ClickEvent click, Button button)
     {
+        if (PainterScript == null)
+            return;
+        if (AnimPlaying)
+        {
+            StopAnimation();
+            return;
+        }
         VisualElement OuterAnimationElement = FindChild(AnimationList,button);
         Debug.Log("move " + AnimationList.IndexOf(OuterAnimationElement));
         if (button.name == "LeftButton")
@@ -877,6 +1003,13 @@ public class PaintingToolEditor : EditorWindow
 
     public void OpenExportPopup()
     {
+        if (PainterScript == null)
+            return;
+        if (AnimPlaying)
+        {
+            StopAnimation();
+            return;
+        }
         VisualElement root = rootVisualElement;
 
         if (root.Q<VisualElement>("ExportPopupWindow") != null)
@@ -969,6 +1102,13 @@ public class PaintingToolEditor : EditorWindow
     }
     public void SaveImage() 
     {
+        if (PainterScript == null)
+            return;
+        if (AnimPlaying)
+        {
+            StopAnimation();
+            return;
+        }
         string path = EditorUtility.SaveFilePanel("Save Image","","UnityPaint","pain");
         //string path = EditorUtility.SaveFolderPanel("Save File", "Saves", "UnityPaint");
         Debug.Log(path);
@@ -1017,9 +1157,7 @@ public class PaintingToolEditor : EditorWindow
     private void MouseMove(PointerMoveEvent mouse)
     {
         if (PainterScript == null)
-        {
             return;
-        }
         if (!paint)
             return;
         if (!isMouseDown)
@@ -1028,6 +1166,11 @@ public class PaintingToolEditor : EditorWindow
         }
         if (PainterScript.SelectedBrush == PaintingToolScript.BrushMode.Paintbrush || PainterScript.SelectedBrush == PaintingToolScript.BrushMode.Eraser)
         {
+            if (AnimPlaying)
+            {
+                StopAnimation();
+                return;
+            }
             if (!isPainting)
                 PainterScript.RegisterChange();
         isPainting = true;
@@ -1062,7 +1205,11 @@ public class PaintingToolEditor : EditorWindow
     {
         if (PainterScript == null)
             return;
-
+        if (AnimPlaying)
+        {
+            StopAnimation();
+            return;
+        }
         Color[] LayerImage = PainterScript.CanvasImage[PainterScript.SelectedAnimation][PainterScript.SelectedLayer].LayerImage.GetPixels();
         if (CopiedLayer != null)
             DestroyImmediate(CopiedLayer);
@@ -1079,7 +1226,11 @@ public class PaintingToolEditor : EditorWindow
     {
         if (PainterScript == null)
             return;
-
+        if (AnimPlaying)
+        {
+            StopAnimation();
+            return;
+        }
         if (CopiedLayer!=null)
         {
             PainterScript.PasteLayer(CopiedLayer);
@@ -1366,21 +1517,100 @@ public class PaintingToolEditor : EditorWindow
         }
 
     }
+    private float Counter;
+    private int AnimIndex = 0;
+    private void PlayAnimation()
+    {
+        AnimPlaying = true;
+        Counter = 0;
+        AnimIndex = 0;
+        VisualElement root = rootVisualElement;
+        Button Play = root.Q<Button>("PlayButton");
+        if (Play.ClassListContains("playAnimationButton"))
+        {
+            Play.RemoveFromClassList("playAnimationButton");
+            Play.AddToClassList("playAnimationButtonSelected");
+        }
+        DisplayAnimation();
+    }
+    private void StopAnimation()
+    {
+        AnimPlaying = false;
+        VisualElement root = rootVisualElement;
+        Button Play = root.Q<Button>("PlayButton");
+        if (Play.ClassListContains("playAnimationButtonSelected"))
+        {
+            Play.RemoveFromClassList("playAnimationButtonSelected");
+            Play.AddToClassList("playAnimationButton");
+        }
+        UpdateDisplayImage();
+    }
+
+    float editorDeltaTime= 0f;
+    float LastTimeSinceStartup = 0f;
+    private void SetEditorDeltaTime()
+    {
+        if (LastTimeSinceStartup == 0f)
+        {
+            LastTimeSinceStartup = (float)EditorApplication.timeSinceStartup;
+        }
+        editorDeltaTime = (float)EditorApplication.timeSinceStartup - LastTimeSinceStartup;
+        LastTimeSinceStartup = (float)EditorApplication.timeSinceStartup;
+    }
+
+    private void Update()
+    {
+        if (AnimPlaying)
+        {
+            SetEditorDeltaTime();
+            Debug.Log(Counter);
+            Debug.Log(AnimSpeed);
+            Counter += editorDeltaTime;
+            if (Counter >= AnimSpeed && AnimSpeed > 0)
+            {
+                DisplayAnimation();
+                Counter = 0;
+            }
+        }
+    }
+
+    private void DisplayAnimation()
+    {
+        if (PainterScript != null)
+        {
+            if (AnimIndex >= PainterScript.CanvasImage.Count)
+                AnimIndex = 0;
+
+            VisualElement root = rootVisualElement;
+
+            DisplayImage = PainterScript.GetDisplayImageAtFrame(AnimIndex);
+            VisualElement Image = root.Q<VisualElement>("DisplayTexture");
+            DestroyImmediate(Image.style.backgroundImage.value.texture);
+            DisplayImage.filterMode = FilterMode.Point;
+            Image.style.backgroundImage = new StyleBackground(DisplayImage);
+
+        }
+        AnimIndex++;
+    }
 }
 
 /*
 - export sprite sheet
 - play animations
+
+
+- overlay underlying layer
+- overlay brush area
+- swatches 
+
 - add icons
 - custom overlay cursors
 - jpeg save option
-- overlay brush area
-- overlay underlying layer
-- swatches 
 - only mirror eraser/brush
+- handle mirror brush size
 
 - make UI look decent
--button tool tips
+- button tool tips
 
 - Load images in (handle load size)
 

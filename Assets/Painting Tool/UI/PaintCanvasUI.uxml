@@ -51,12 +51,11 @@
                     <engine:VisualElement name="DisplayTexture" style="flex-grow: 1; align-self: center; -unity-text-align: upper-center; border-left-color: rgba(0, 0, 0, 0.78); border-right-color: rgba(0, 0, 0, 0.78); border-top-color: rgba(0, 0, 0, 0.78); border-bottom-color: rgba(0, 0, 0, 0.78); border-top-width: 2px; border-right-width: 2px; border-bottom-width: 2px; border-left-width: 2px; align-content: auto; align-items: center; -unity-background-scale-mode: scale-to-fit; width: 100%; height: 100%; flex-basis: auto;" />
                 </engine:VisualElement>
                 <engine:VisualElement name="CenterBottomContainer" style="flex-grow: 1; height: 20%;">
-                    <engine:VisualElement name="TimelineContainer" style="flex-grow: 1; height: 10%; flex-direction: row; flex-shrink: 1; justify-content: center;">
-                        <engine:Button text="Button" />
-                        <engine:Button text="Button" />
-                        <engine:Button text="Button" style="flex-direction: row;" />
+                    <engine:VisualElement name="TimelineContainer" style="flex-grow: 1; height: 15%; flex-direction: row; flex-shrink: 1; justify-content: center;">
+                        <engine:Button text="Play" name="PlayButton" class="playAnimationButton" style="font-size: 10px; height: 100%;" />
+                        <engine:Button text="Stop" name="StopButton" class="playAnimationButton" style="font-size: 10px; height: 100%;" />
                     </engine:VisualElement>
-                    <engine:VisualElement name="LayersContainer" style="flex-grow: 1; height: 90%; flex-direction: row;">
+                    <engine:VisualElement name="LayersContainer" style="flex-grow: 1; height: 85%; flex-direction: row;">
                         <engine:VisualElement name="LayerInfoContainer" style="flex-grow: 1; width: 20%; height: 100%; align-self: stretch; align-content: stretch;">
                             <engine:Label text="Layers" name="Label" style="height: 10%; font-size: 15px; -unity-text-align: lower-center; align-self: stretch; align-items: flex-start; flex-direction: column; top: auto; bottom: auto; -unity-font-style: bold;" />
                             <engine:ScrollView name="LayerList" horizontal-scroller-visibility="Hidden" style="height: 100%; overflow: hidden; align-self: stretch; justify-content: flex-start; flex-direction: column; align-content: stretch; -unity-text-align: upper-center;">
@@ -73,7 +72,7 @@
             </engine:VisualElement>
             <engine:VisualElement name="RightContainer" style="flex-grow: 1; width: 5%;">
                 <engine:VisualElement name="RightTopContainer" style="flex-grow: 1; height: 5%;" />
-                <engine:VisualElement name="BrushContainer" style="flex-grow: 1; flex-direction: column; flex-wrap: nowrap; width: auto; height: 95%; justify-content: flex-start; align-self: stretch; align-content: stretch; align-items: stretch;">
+                <engine:VisualElement name="BrushContainer" style="flex-grow: 1; flex-direction: column; flex-wrap: nowrap; width: auto; height: 75%; justify-content: flex-start; align-self: stretch; align-content: stretch; align-items: stretch;">
                     <engine:Button text="Brush" name="BrushButton" class="button PaintToolbuttons PaintToolbutton" style="background-image: none; justify-content: center;">
                         <engine:VisualElement name="Icon" style="flex-grow: 1; justify-content: center; background-image: url(&quot;project://database/Assets/Painting%20Tool/Icons/Brush%20Icon.png?fileID=2800000&amp;guid=59c3026c8eb003147a577727f7354944&amp;type=3#Brush Icon&quot;); background-color: rgba(0, 0, 0, 0); -unity-background-scale-mode: scale-to-fit;" />
                     </engine:Button>
@@ -86,6 +85,9 @@
                     <engine:Button text="Fill" name="PaintBucketButton" class="PaintToolbuttons PaintToolbutton">
                         <engine:VisualElement name="Icon" style="flex-grow: 1;" />
                     </engine:Button>
+                </engine:VisualElement>
+                <engine:VisualElement name="RIghtBottomContainer" style="flex-grow: 1; height: 20%;">
+                    <engine:FloatField label="Animation&#10;Speed" value="1" name="AnimationSpeed" style="white-space: normal; flex-wrap: wrap; flex-direction: column; -unity-text-align: upper-left; text-overflow: clip; font-size: 13px;" />
                 </engine:VisualElement>
             </engine:VisualElement>
         </engine:VisualElement>

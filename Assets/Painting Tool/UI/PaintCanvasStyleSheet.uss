@@ -105,3 +105,10 @@ VisualElement {
     margin-left: 20px;
     margin-right: 20px;
 }
+
+.playAnimationButton {
+}
+
+.playAnimationButtonSelected {
+    background-color: rgb(255, 255, 255);
+}

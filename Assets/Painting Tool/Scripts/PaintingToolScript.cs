@@ -724,7 +724,7 @@ public class PaintingToolScript
 
     private void FillTexture2D(Texture2D layer)
     {
-        Color32[] colors = new Color32[CanvasWidth * CanvasHeight];
+        Color32[] colors = new Color32[layer.width * layer.height];
         for (int i = 0; i < colors.Length; i++)
             colors[i] = new Color(0, 0, 0, 0);
         layer.SetPixels32(colors);
@@ -982,51 +982,69 @@ public class PaintingToolScript
 
     public Texture2D GetExportImages()
     {
-        Texture2D SpriteSheet = new Texture2D(CanvasWidth,CanvasHeight);
+        Texture2D SpriteSheet = new Texture2D(CanvasWidth * CanvasImage.Count, CanvasHeight);
+        FillTexture2D(SpriteSheet);
         SpriteSheet.filterMode = FilterMode.Point;
-
-        foreach (List<PaintLayer> Frame in CanvasImage)
+        for (int i = 0; i < CanvasImage.Count; i++)
         {
-            if (Frame.Count > 1)
+
+            if (CanvasImage[i].Count > 1)
             {
-                List<PaintLayer> layers = new List<PaintLayer>(Frame);
+                List<PaintLayer> layers = new List<PaintLayer>(CanvasImage[i]);
                 layers.Reverse();
 
                 foreach (PaintLayer layer in layers)
                 {
                     if (!layer.LayerVisible)
                         continue;
-                    for (int y = 0; y < CanvasHeight; y++)
+                    for (int y = 0 /*+ (CanvasHeight * i)*/; y < CanvasHeight /** (i+1)*/; y++)
                     {
-                        for (int x = 0; x < CanvasWidth; x++)
+                        for (int x = 0 + (CanvasWidth * i); x < CanvasWidth * (i+1); x++)
                         {
                             Color Pixel = layer.LayerImage.GetPixel(x, y);
-                            if (Pixel.a > 0 && layers.IndexOf(layer) != layers.Count - 1)
+                            if (Pixel.a > 0)
+                            {
+                                if (Pixel.a < 1 && SpriteSheet.GetPixel(x, y).a > 0 && Pixel.a > 0)
+                                {
+                                    Color Blendedcolor = new Color();
+                                    //Blendedcolor = (Pixel + DisplayImage.GetPixel(x, y));
+                                    Color UnderlayColor = SpriteSheet.GetPixel(x, y);
+                                    Blendedcolor.r = Pixel.r * Pixel.a;
+                                    Blendedcolor.g = Pixel.g * Pixel.a;
+                                    Blendedcolor.b = Pixel.b * Pixel.a;
+                                    Blendedcolor.r += (1 - Pixel.a) * UnderlayColor.r * UnderlayColor.a;
+                                    Blendedcolor.g += (1 - Pixel.a) * UnderlayColor.g * UnderlayColor.a;
+                                    Blendedcolor.b += (1 - Pixel.a) * UnderlayColor.b * UnderlayColor.a;
+                                    Blendedcolor.a = UnderlayColor.a * (1 - Pixel.a) + Pixel.a;
+                                    SpriteSheet.SetPixel(x, y, Blendedcolor);
+                                }
+                                else
+                                {
+                                    SpriteSheet.SetPixel(x, y, Pixel);
+                                }
+                            }
+                            else if (layers.IndexOf(layer) != layers.Count - 1 && SpriteSheet.GetPixel(x, y).a <= 0)
                             {
                                 SpriteSheet.SetPixel(x, y, Pixel);
                             }
                         }
                     }
                 }
-                //foreach (PaintLayer layer in layers)
-                //{
-                //    UnityEngine.Object.DestroyImmediate(layer.LayerImage);
-                //}
             }
-            else if (Frame[0].LayerVisible)
+            else if (CanvasImage[i][0].LayerVisible)
             {
-                for (int y = 0; y < CanvasHeight; y++)
+                for (int y = 0 /*+ (CanvasHeight * i)*/; y < CanvasHeight /** (i+1)*/; y++)
                 {
-                    for (int x = 0; x < CanvasWidth; x++)
+                    for (int x = 0 + (CanvasWidth * i); x < CanvasWidth * (i + 1); x++)
                     {
-                        Color Pixel = Frame[0].LayerImage.GetPixel(x, y);
+                        Color Pixel = CanvasImage[i][0].LayerImage.GetPixel(x, y);
                         SpriteSheet.SetPixel(x, y, Pixel);
                     }
                 }
             }
         }
-
         SpriteSheet.Apply();
+
         return SpriteSheet;
     }
     public Texture2D GetExportImage()
@@ -1121,5 +1139,70 @@ public class PaintingToolScript
             CanvasImage.Add(newFrame);
         }
         UpdateDisplayImage();
+    }
+
+    public Texture2D GetDisplayImageAtFrame(int Frame)
+    {
+        Texture2D DisplayImage = new Texture2D(CanvasWidth, CanvasHeight);
+        DisplayImage.filterMode = FilterMode.Point;
+        if (CanvasImage[Frame].Count > 1)
+        {
+            List<PaintLayer> layers = new List<PaintLayer>(CanvasImage[Frame]);
+            layers.Reverse();
+
+            foreach (PaintLayer layer in layers)
+            {
+                if (!layer.LayerVisible)
+                    continue;
+                for (int y = 0; y < CanvasHeight; y++)
+                {
+                    for (int x = 0; x < CanvasWidth; x++)
+                    {
+                        Color Pixel = layer.LayerImage.GetPixel(x, y);
+                        if (Pixel.a > 0)
+                        {
+                            if (Pixel.a < 1 && DisplayImage.GetPixel(x, y).a > 0 && Pixel.a > 0)
+                            {
+                                Color Blendedcolor = new Color();
+                                //Blendedcolor = (Pixel + DisplayImage.GetPixel(x, y));
+                                Color UnderlayColor = DisplayImage.GetPixel(x, y);
+                                Blendedcolor.r = Pixel.r * Pixel.a;
+                                Blendedcolor.g = Pixel.g * Pixel.a;
+                                Blendedcolor.b = Pixel.b * Pixel.a;
+                                Blendedcolor.r += (1 - Pixel.a) * UnderlayColor.r * UnderlayColor.a;
+                                Blendedcolor.g += (1 - Pixel.a) * UnderlayColor.g * UnderlayColor.a;
+                                Blendedcolor.b += (1 - Pixel.a) * UnderlayColor.b * UnderlayColor.a;
+                                Blendedcolor.a = UnderlayColor.a * (1 - Pixel.a) + Pixel.a;
+                                DisplayImage.SetPixel(x, y, Blendedcolor);
+                            }
+                            else
+                            {
+                                DisplayImage.SetPixel(x, y, Pixel);
+                            }
+                        }
+                    }
+                }
+            }
+            //foreach (PaintLayer layer in layers)
+            //{
+            //    UnityEngine.Object.DestroyImmediate(layer.LayerImage);
+            //}
+        }
+        else if (CanvasImage[Frame][0].LayerVisible)
+        {
+            for (int y = 0; y < CanvasHeight; y++)
+            {
+                for (int x = 0; x < CanvasWidth; x++)
+                {
+                    Color Pixel = CanvasImage[Frame][0].LayerImage.GetPixel(x, y);
+                    if (Pixel.a > 0)
+                    {
+                        DisplayImage.SetPixel(x, y, Pixel);
+                    }
+                }
+            }
+        }
+        DisplayImage.Apply();
+        return DisplayImage;
     }
 }
