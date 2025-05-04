@@ -1372,11 +1372,12 @@ public class PaintingToolEditor : EditorWindow
 - export sprite sheet
 - play animations
 - add icons
-- overlay cursor
+- custom overlay cursors
 - jpeg save option
-- overlay draw area
+- overlay brush area
 - overlay underlying layer
-
+- swatches 
+- only mirror eraser/brush
 
 - make UI look decent
 -button tool tips
