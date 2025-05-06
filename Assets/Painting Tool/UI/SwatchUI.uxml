@@ -1,0 +1,6 @@
+<engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <engine:VisualElement name="SwatchContainer" style="flex-grow: 1; flex-direction: row; width: auto; height: auto; margin-top: 5px; margin-right: 5px; margin-bottom: 5px; margin-left: 5px; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; align-self: stretch; justify-content: center;">
+        <engine:Button name="SwatchColour" style="width: 85%; height: 100%; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0;" />
+        <engine:Button text="X" name="DeleteSwatch" style="width: 15%; height: 100%; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0;" />
+    </engine:VisualElement>
+</engine:UXML>

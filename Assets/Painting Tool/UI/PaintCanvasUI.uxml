@@ -14,7 +14,11 @@
         <engine:VisualElement name="BottomContainer" style="flex-grow: 1; flex-direction: row; height: 90%;">
             <engine:VisualElement name="LeftContainer" style="flex-grow: 1; width: 5%;">
                 <engine:VisualElement name="LeftTopContainer" style="flex-grow: 1; height: 5%;" />
-                <engine:VisualElement name="LeftMiddleContainer" style="flex-grow: 1; width: 100%; align-self: flex-start; flex-wrap: wrap; flex-direction: row; height: 75%;" />
+                <engine:VisualElement name="LeftMiddleContainer" style="flex-grow: 1; width: 100%; align-self: flex-start; flex-wrap: wrap; flex-direction: row; height: 75%;">
+                    <engine:ScrollView name="SwatchList" horizontal-scroller-visibility="Hidden" mode="Vertical" style="flex-direction: row; flex-wrap: wrap; width: 100%; height: 100%; justify-content: center; align-items: stretch;">
+                        <engine:Button text="+&#10;" name="AddSwatchButton" style="width: 20px; height: 20px;" />
+                    </engine:ScrollView>
+                </engine:VisualElement>
                 <engine:VisualElement name="LeftBottomContainer" style="flex-grow: 1; flex-wrap: nowrap; flex-direction: column; height: 20%; align-self: center; justify-content: flex-start; align-content: auto; align-items: stretch;">
                     <engine:VisualElement name="HigherContainer" style="flex-grow: 1; align-items: flex-start; align-self: stretch; flex-direction: column; flex-wrap: nowrap; height: 65%; justify-content: flex-start; align-content: auto;">
                         <editor:ColorField value="#000000FF" show-eye-dropper="false" show-alpha="true" name="PrimaryColour" hdr="false" usage-hints="DynamicColor" class="ColourField" style="width: 30px; height: 30px;" />
@@ -28,8 +32,8 @@
             <engine:VisualElement name="CenterContainer" style="flex-grow: 1; width: 85%;">
                 <engine:VisualElement name="CenterTopContainer" style="flex-grow: 1; width: auto; height: 5%; flex-direction: row;">
                     <engine:VisualElement name="CenterTopLeftContainer" style="flex-grow: 1; flex-direction: row;">
-                        <engine:Button text="Undo" name="UndoButton" />
-                        <engine:Button text="Redo" name="RedoButton" />
+                        <engine:Button text="Undo" name="UndoButton" tooltip="ALT+SHIFT+Z to QuickSelect" />
+                        <engine:Button text="Redo" name="RedoButton" tooltip="ALT+SHIFT+Y to QuickSelect" />
                     </engine:VisualElement>
                     <engine:VisualElement name="CenterTopMiddleContainer" style="flex-grow: 1; flex-direction: row;">
                         <engine:Button text="Mirror Y" name="MirrorY" class="layerButton" />
@@ -41,14 +45,16 @@
                             <engine:Button text="Circular Brush" name="CircleBrush" class="layerButton" style="font-size: 10px;" />
                         </engine:VisualElement>
                         <engine:VisualElement name="CenterTopRightRight" style="flex-grow: 1; flex-direction: row-reverse; width: 50%; justify-content: center; align-items: center; align-self: stretch; -unity-text-align: upper-center;">
-                            <engine:Button text="+" name="IncreaseBrush" style="-unity-font-style: bold;" />
+                            <engine:Button text="+" name="IncreaseBrush" tooltip="+ / ]  to QuickSelect " style="-unity-font-style: bold;" />
                             <engine:Label text="1" name="BrushText" style="align-items: center; align-self: center; justify-content: flex-end; -unity-font-style: bold; -unity-text-align: upper-center;" />
-                            <engine:Button text="-" name="DecreaseBrush" style="-unity-font-style: bold;" />
+                            <engine:Button text="-" name="DecreaseBrush" tooltip="- / [  to QuickSelect " style="-unity-font-style: bold;" />
                         </engine:VisualElement>
                     </engine:VisualElement>
                 </engine:VisualElement>
                 <engine:VisualElement name="CenterMiddleContainer" style="flex-grow: 1; height: 75%;">
-                    <engine:VisualElement name="DisplayTexture" style="flex-grow: 1; align-self: center; -unity-text-align: upper-center; border-left-color: rgba(0, 0, 0, 0.78); border-right-color: rgba(0, 0, 0, 0.78); border-top-color: rgba(0, 0, 0, 0.78); border-bottom-color: rgba(0, 0, 0, 0.78); border-top-width: 2px; border-right-width: 2px; border-bottom-width: 2px; border-left-width: 2px; align-content: auto; align-items: center; -unity-background-scale-mode: scale-to-fit; width: 100%; height: 100%; flex-basis: auto;" />
+                    <engine:VisualElement name="BrushTexture" style="flex-grow: 1; width: 100%; height: 100%; -unity-background-scale-mode: scale-to-fit;">
+                        <engine:VisualElement name="DisplayTexture" style="flex-grow: 1; align-self: center; -unity-text-align: upper-center; border-left-color: rgba(0, 0, 0, 0.78); border-right-color: rgba(0, 0, 0, 0.78); border-top-color: rgba(0, 0, 0, 0.78); border-bottom-color: rgba(0, 0, 0, 0.78); border-top-width: 2px; border-right-width: 2px; border-bottom-width: 2px; border-left-width: 2px; align-content: auto; align-items: center; -unity-background-scale-mode: scale-to-fit; width: 100%; height: 100%; flex-basis: auto;" />
+                    </engine:VisualElement>
                 </engine:VisualElement>
                 <engine:VisualElement name="CenterBottomContainer" style="flex-grow: 1; height: 20%;">
                     <engine:VisualElement name="TimelineContainer" style="flex-grow: 1; height: 15%; flex-direction: row; flex-shrink: 1; justify-content: center;">
@@ -73,16 +79,16 @@
             <engine:VisualElement name="RightContainer" style="flex-grow: 1; width: 5%;">
                 <engine:VisualElement name="RightTopContainer" style="flex-grow: 1; height: 5%;" />
                 <engine:VisualElement name="BrushContainer" style="flex-grow: 1; flex-direction: column; flex-wrap: nowrap; width: auto; height: 75%; justify-content: flex-start; align-self: stretch; align-content: stretch; align-items: stretch;">
-                    <engine:Button text="Brush" name="BrushButton" class="button PaintToolbuttons PaintToolbutton" style="background-image: none; justify-content: center;">
+                    <engine:Button text="Brush" name="BrushButton" tooltip="B to QuickSelect" class="button PaintToolbuttons PaintToolbutton" style="background-image: none; justify-content: center;">
                         <engine:VisualElement name="Icon" style="flex-grow: 1; justify-content: center; background-image: url(&quot;project://database/Assets/Painting%20Tool/Icons/Brush%20Icon.png?fileID=2800000&amp;guid=59c3026c8eb003147a577727f7354944&amp;type=3#Brush Icon&quot;); background-color: rgba(0, 0, 0, 0); -unity-background-scale-mode: scale-to-fit;" />
                     </engine:Button>
-                    <engine:Button text="Eraser" name="EraserButton" class="button PaintToolbuttons PaintToolbutton">
+                    <engine:Button text="Eraser" name="EraserButton" tooltip="H to QuickSelect" class="button PaintToolbuttons PaintToolbutton">
                         <engine:VisualElement name="Icon" style="flex-grow: 1;" />
                     </engine:Button>
-                    <engine:Button text="Eye Drop" name="EyeDropButton" class="PaintToolbuttons PaintToolbutton">
+                    <engine:Button text="Eye Drop" name="EyeDropButton" tooltip="I to QuickSelect" class="PaintToolbuttons PaintToolbutton">
                         <engine:VisualElement name="Icon" style="flex-grow: 1;" />
                     </engine:Button>
-                    <engine:Button text="Fill" name="PaintBucketButton" class="PaintToolbuttons PaintToolbutton">
+                    <engine:Button text="Fill" name="PaintBucketButton" tooltip="G to QuickSelect" class="PaintToolbuttons PaintToolbutton">
                         <engine:VisualElement name="Icon" style="flex-grow: 1;" />
                     </engine:Button>
                 </engine:VisualElement>

@@ -7,6 +7,7 @@ using System.IO;
 using System;
 using System.Collections;
 using Unity.VisualScripting;
+using static UnityEditor.Experimental.GraphView.GraphView;
 public class PaintingToolEditor : EditorWindow
 {
     private PaintingToolScript PainterScript;
@@ -18,6 +19,8 @@ public class PaintingToolEditor : EditorWindow
 
     private ScrollView LayerList;
     private ScrollView AnimationList;
+    
+    private ScrollView SwatchList;
 
     public Color PrimaryColor;
     public Color SecondaryColor;
@@ -51,7 +54,7 @@ public class PaintingToolEditor : EditorWindow
         SelectedWindow = PaintWindow.Paint;
         PaintingToolEditor window = GetWindow<PaintingToolEditor>();
         Texture Icon = AssetDatabase.LoadAssetAtPath<Texture>("Assets/Painting Tool/UI/CoolPaint!.png");
-        window.titleContent = new GUIContent("Painting Tool",Icon,"Funny Paint");
+        window.titleContent = new GUIContent("Unity Paint",Icon,"LMB to PAINT :)");
     }
     [MenuItem("Unity Paint/Help",false,10)]
     public static void ShowHelpWindow()
@@ -163,6 +166,10 @@ public class PaintingToolEditor : EditorWindow
         AnimationList = root.Q<ScrollView>("AnimationList");
         LayerList = root.Q<ScrollView>("LayerList");
 
+        SwatchList = root.Q<ScrollView>("SwatchList");
+
+        root.Q<Button>("AddSwatchButton").clicked += AddSwatch;
+
         root.Q<Button>("AddLayerButton").clicked+=AddLayer;
         root.Q<Button>("AddAnimationButton").clicked += AddAnimation;
 
@@ -209,6 +216,7 @@ public class PaintingToolEditor : EditorWindow
 
         PainterScript.LayerMoved += MovedLayer;
 
+        //InitializeBrush();
     }
     private void MovedLayer(int OldIndex,int newIndex)
     {
@@ -1125,6 +1133,7 @@ public class PaintingToolEditor : EditorWindow
     private void MouseOut(PointerLeaveEvent mouse)
     {
         paint = false;
+        //ClearTex(BrushTex2D);
     }
     private void MouseUp(PointerUpEvent mouse)
     {
@@ -1158,8 +1167,10 @@ public class PaintingToolEditor : EditorWindow
     {
         if (PainterScript == null)
             return;
+
         if (!paint)
             return;
+        //OverlayBrush((int)mouse.position.x,(int)mouse.position.y);
         if (!isMouseDown)
         {
             return;
@@ -1592,16 +1603,139 @@ public class PaintingToolEditor : EditorWindow
         }
         AnimIndex++;
     }
+
+    private void AddSwatch()
+    {
+        if (PainterScript == null)
+            return;
+
+        VisualTreeAsset SwatchInfo = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Painting Tool/UI/SwatchUI.uxml");
+        VisualElement Swatch = SwatchInfo.CloneTree();
+        SwatchList.Insert(SwatchList.childCount-1, Swatch);
+        Button SwatchColourButton = Swatch.Q<Button>("SwatchColour");
+        SwatchColourButton.style.backgroundColor = PrimaryColor;
+        SwatchColourButton.RegisterCallback<ClickEvent, Button>(ClickedSwatch, SwatchColourButton);
+
+        Button DeleteButton = Swatch.Q<Button>("DeleteSwatch");
+        DeleteButton.RegisterCallback<ClickEvent, Button>(DeleteSwatch, DeleteButton);
+    }
+    private void ClickedSwatch(ClickEvent Clicked, Button Swatch)
+    {
+        PrimaryColor = Swatch.style.backgroundColor.value;
+        rootVisualElement.Q<ColorField>("PrimaryColour").value = PrimaryColor;
+        ChangeColour();
+    }
+    private void DeleteSwatch(ClickEvent Clicked, Button Swatch)
+    {
+        if (PainterScript == null)
+            return;
+
+        Debug.Log(SwatchList.IndexOf(FindChild(SwatchList, Swatch)));
+
+        SwatchList.RemoveAt(SwatchList.IndexOf(FindChild(SwatchList, Swatch)));
+    }
+
+    VisualElement BrushTex;
+    Texture2D BrushTex2D;
+    private void InitializeBrush()
+    {
+        BrushTex2D = new Texture2D(width,height);
+        BrushTex2D.filterMode = FilterMode.Point;
+        ClearTex(BrushTex2D);
+        BrushTex = rootVisualElement.Q<VisualElement>("BrushTexture");
+        BrushTex.style.backgroundImage = BrushTex2D;
+    }
+    private void ClearTex(Texture2D Tex)
+    {
+        Color32[] colors = new Color32[Tex.width * Tex.height];
+        for (int i = 0; i < colors.Length; i++)
+            colors[i] = new Color(0, 0, 0, 0);
+        Tex.SetPixels32(colors);
+        Tex.Apply();
+    }
+    private void OverlayBrush(float x,float y)
+    {
+        ClearTex(BrushTex2D);
+        Debug.Log("Ovelray");
+        if (isPainting)
+           return;
+        if (PainterScript.SelectedBrush == PaintingToolScript.BrushMode.Paintbrush || PainterScript.SelectedBrush == PaintingToolScript.BrushMode.Eraser)
+        {
+            Vector2 PaintPos = CalculateOffset(x,y);
+
+            Color DrawColor = new Color(1,1,1,1);
+            if (PainterScript.SelectedBrush == PaintingToolScript.BrushMode.Paintbrush)
+                DrawColor = PrimaryColor;
+            if (PainterScript.SelectedBrush == PaintingToolScript.BrushMode.Eraser)
+                DrawColor = Color.white;
+
+            DrawColor.a = 1;
+
+            float Radi = brushSize / 2.0f;
+            int BrushRadius = Mathf.FloorToInt(Radi);
+
+            if (PainterScript.SquareBrush)
+            {
+                int Offset = 0;
+                if (Radi % 1 > 0)
+                {
+                    Offset = 0;
+                }
+                else
+                {
+                    Offset = 1;
+                }
+
+                for (int Py = -BrushRadius + Offset; Py <= BrushRadius; Py++)
+                {
+                    for (int Px = -BrushRadius; Px <= BrushRadius - Offset; Px++)
+                    {
+                        int yy = (int)PaintPos.y + Py;
+                        int xx = (int)PaintPos.x + Px;
+                        Debug.Log("Drawing " + xx + " " + yy);
+                        if (yy < 0 || yy >= height || xx < 0 || xx >= width)
+                            continue;
+                        BrushTex2D.SetPixel(xx, yy,DrawColor);
+                        Debug.Log("Drawing " + xx + " " + yy);
+                    }
+                }
+            }
+            else
+            {
+                BrushRadius = Mathf.CeilToInt(Radi);
+
+                for (int py = -BrushRadius; py <= BrushRadius; py++)
+                {
+                    for (int px = -BrushRadius; px <= BrushRadius; px++)
+                    {
+
+                        int xx = (int)PaintPos.x + px;
+                        int yy = (int)PaintPos.y + py;
+
+                        float distance = Mathf.Sqrt(Mathf.Pow((PaintPos.x - xx), 2) + Mathf.Pow((PaintPos.y - yy), 2));
+                        if (Mathf.Abs(distance) > Radi)
+                            continue;
+                        Debug.Log("Drawing " + xx + " " + yy);
+                        if (yy < 0 || yy >= height || xx < 0 || xx >= width)
+                            continue;
+
+                        BrushTex2D.SetPixel(xx, yy, DrawColor);
+                        Debug.Log("Drawing " + xx + " " + yy );
+                    }
+                }
+            }
+            BrushTex2D.filterMode = FilterMode.Point;
+            BrushTex2D.Apply();
+            BrushTex.style.backgroundImage = BrushTex2D;
+
+        }
+    }
 }
 
 /*
-- export sprite sheet
-- play animations
-
+- overlay brush area - no
 
 - overlay underlying layer
-- overlay brush area
-- swatches 
 
 - add icons
 - custom overlay cursors
