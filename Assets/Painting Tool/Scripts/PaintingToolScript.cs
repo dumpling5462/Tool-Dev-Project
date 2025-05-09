@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class PaintingToolScript
 {
+    //events to handle communicating changes to the editor without a direct reference
     public event Action UpdateCanvas;
     public event Action ColourChange;
     public event Action LayerSelected;
@@ -18,6 +19,7 @@ public class PaintingToolScript
     public event Action<int, string> NameChange;
 
     public event Action<int, int> LayerMoved;
+    //enum for the different brushes available to the user
     public enum BrushMode
     {
         Paintbrush,
@@ -25,6 +27,7 @@ public class PaintingToolScript
         PaintBucket,
         Eyedropper
     }
+    //defines a layer definition
     public struct PaintLayer
     {
         public Texture2D LayerImage;
@@ -34,8 +37,10 @@ public class PaintingToolScript
 
     public int CanvasWidth;
     public int CanvasHeight;
+    //this stores all the frame and layer data for the tool
     public List<List<PaintLayer>> CanvasImage = new List<List<PaintLayer>>();
 
+    //the layer/ animation the user has selected
     public int SelectedLayer = 0;
     public int SelectedAnimation = 0;
 
@@ -43,6 +48,7 @@ public class PaintingToolScript
     public BrushMode SelectedBrush = BrushMode.Paintbrush;
     public int BrushSize = 1;
 
+    //reference to the undo/redo stack implementation
     private readonly int Stacksize = 32;
     private UndoRedoChangeStack UndoRedoStack;
 
@@ -53,14 +59,18 @@ public class PaintingToolScript
 
     public bool SquareBrush = false;
 
-    public void Initialize(int width, int height)
+    //called within the editor to first initialise the painting tool
+    public void Initialise(int width, int height)
     {
+        //initialises the undo/redo stack system
         UndoRedoStack = new UndoRedoChangeStack();
-        UndoRedoStack.initialize(Stacksize);
+        UndoRedoStack.initialise(Stacksize);
+        //creates the canvas for the tool
         CanvasImage = new List<List<PaintLayer>>();
         CanvasHeight = height;
         CanvasWidth = width;
     }
+    //handles adding a frame to the canvas, along with copying over necessary layer data, to be called inside the editor
     public void AddAnimation()
     {
         List<PaintLayer> Animation = new List<PaintLayer>();
@@ -79,15 +89,21 @@ public class PaintingToolScript
             }
         }
         CanvasImage.Add(Animation);
+        //only records a change if a frame is added that isn't the initial frame created to prevent the user from undoing initial layout
         if (!isUndoRedo && CanvasImage.Count > 1)
         {
+            //used to record a special change so the user can undo frame additions
             AddedMade(-1, CanvasImage.Count - 1);
         }
     }
+
+    //handles adding layer data, takes in a string to set the initial layer name, to be called inside the editor
     public void AddLayer(string name)
     {
+        //adds the layer across all frame instances
         foreach(List<PaintLayer> Frame in CanvasImage)
         {
+            //creates a new texture in memory to be used
             PaintLayer layer = new PaintLayer();
             layer.LayerImage = new Texture2D(CanvasWidth, CanvasHeight);
             layer.LayerName = name;
@@ -96,11 +112,14 @@ public class PaintingToolScript
             FillTexture2D(layer.LayerImage);
             Frame.Add(layer);
         }
+        //only records a change if the layer that is added isn't the initial layer created to prevent the user from undoing initial layout
         if (!isUndoRedo && CanvasImage[SelectedAnimation].Count > 1)
         {
+            //used to record a special change so the user can undo layer additions
             AddedMade(CanvasImage[0].Count-1,-1);
         }
     }
+    //handles removing a layer across all frames at a specified index, to be called by the editor when a undo/redo is called, to handle undoing adding a layer or redoing layer removals
     public void RemoveLayer(int ID)
     {
         if (ID >= CanvasImage[0].Count)
@@ -109,6 +128,7 @@ public class PaintingToolScript
         }
         for (int i = 0; i < CanvasImage.Count; i++)
         {
+            UnityEngine.Object.DestroyImmediate(CanvasImage[i][ID].LayerImage);
             CanvasImage[i].RemoveAt(ID);
         }
         if (SelectedLayer == ID)
@@ -117,11 +137,16 @@ public class PaintingToolScript
         }
         UpdateDisplayImage();
     }
+    ////handles removing a frame at a specified index, to be called by the editor when a undo/redo is called, to handle undoing adding a frame or redoing a frame removal
     public void RemoveAnimation(int ID)
     {
         if (ID >= CanvasImage.Count)
         {
             return;
+        }
+        foreach (PaintLayer Layer in CanvasImage[ID])
+        {
+            UnityEngine.Object.DestroyImmediate(Layer.LayerImage);
         }
         CanvasImage.RemoveAt(ID);
         if (SelectedAnimation == ID)
@@ -131,29 +156,30 @@ public class PaintingToolScript
         }
         UpdateDisplayImage();
     }
-
-    public void Brush()
-    {
-
-    }
+    //to be called to play a event to tell the editor that the canvas needs to be updated
     public void UpdateDisplayImage()
     {
         UpdateCanvas?.Invoke();
     }
 
+    //creates a display image from the layers in the specified animation index to be displayed inside the editor, this should be called inside of the editor
     public Texture2D GetDisplayImage()
     {
         Texture2D DisplayImage = new Texture2D(CanvasWidth,CanvasHeight);
         DisplayImage.filterMode = FilterMode.Point;
         if (CanvasImage[SelectedAnimation].Count > 1)
         {
+            //creates an instance of a frame
             List<PaintLayer> layers = new List<PaintLayer>(CanvasImage[SelectedAnimation]);
+            //reverses the frame order so it is rendered bottom to top so higher layer index's are rendered over prior frames
             layers.Reverse();
 
+            //iterates through all the layers at a specified frame
             foreach (PaintLayer layer in layers)
             {
                 if (!layer.LayerVisible)
                     continue;
+                //iterates through every pixel in a layer
                 for (int y = 0; y < CanvasHeight; y++)
                 {
                     for (int x = 0; x < CanvasWidth; x++)
@@ -163,6 +189,7 @@ public class PaintingToolScript
                         {
                             if (Pixel.a < 1 && DisplayImage.GetPixel(x,y).a > 0 && Pixel.a > 0)
                             {
+                                //handles blending colours between layers when alpha is below 1
                                 Color Blendedcolor = new Color();
                                 //Blendedcolor = (Pixel + DisplayImage.GetPixel(x, y));
                                 Color UnderlayColor = DisplayImage.GetPixel(x, y);
@@ -183,11 +210,8 @@ public class PaintingToolScript
                     }
                 }
             }
-            //foreach (PaintLayer layer in layers)
-            //{
-            //    UnityEngine.Object.DestroyImmediate(layer.LayerImage);
-            //}
         }
+        //renders a singular layer when only 1 layer exists
         else if (CanvasImage[SelectedAnimation][0].LayerVisible)
         {
             for (int y = 0; y < CanvasHeight; y++)
@@ -202,31 +226,40 @@ public class PaintingToolScript
                 }
             }
         }
+        //applies changes to the texture
         DisplayImage.Apply();
         return DisplayImage;
     }
 
+    //to be called by the editor to switch brush selection
     public void SwitchBrushMode(BrushMode newBrushMode)
     {
         SelectedBrush = newBrushMode;
     }
-
+    //to be called by the editor when the canvas is pressed, used to handle the different brush functions
     public void PressedPixel(int x,int y)
     {
+        //returns if the person tries to paint over a pixel they have already painted to prevent unecessary texture changes, also takes into account brush size, so if the brush size is larger it will proceed anyway
         if ((CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.GetPixel(x,y) == SelectedColour && SelectedBrush != BrushMode.Eraser) || (CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.GetPixel(x, y) == new Color(0,0,0,0) && SelectedBrush == BrushMode.Eraser))
             return;
+        //returns if the index is outside the canvas
         if (x < 0 || x >= CanvasWidth || y < 0 || y >= CanvasHeight)
             return;
-        ChangeMade();
         switch (SelectedBrush)
         {
             case BrushMode.Paintbrush:
+                //registers a change for the undo redo system
+                ChangeMade();
                 PaintPixel(x,y, SelectedColour);
                 break;
             case BrushMode.PaintBucket:
+                //registers a change for the undo redo system
+                ChangeMade();
                 Fill(x,y,GetPixel(x,y));
                 break;
             case BrushMode.Eraser:
+                //registers a change for the undo redo system
+                ChangeMade();
                 PaintPixel(x, y, new Color(0,0,0,0));
                 break;
             case BrushMode.Eyedropper:
@@ -237,6 +270,7 @@ public class PaintingToolScript
         CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.Apply();
         UpdateDisplayImage();
     }
+    //The same as the prior function with the same name, except this function does not register changes, to be used for continuous painting in the editor, e.g. the user is holding left click to paint
     public void PressedPixel(int x, int y, bool Painting)
     {
         if ((CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.GetPixel(x, y) == SelectedColour && SelectedBrush != BrushMode.Eraser && BrushSize <= 1) || (CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.GetPixel(x, y) == new Color(0, 0, 0, 0) && SelectedBrush == BrushMode.Eraser && BrushSize <= 1))
@@ -263,25 +297,26 @@ public class PaintingToolScript
         CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.Apply();
         UpdateDisplayImage();
     }
+    //to be called by the editor to manually register a change for the undo/redo stack
     public void RegisterChange()
     {
         ChangeMade();
     }
 
 
-
+    //used for the brush and eraser brushes, to handle painting at a specific location
     private void PaintPixel(int x,int y,Color selectedColour)
     {
         //CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.SetPixel(x,y,selectedColour);
         float Radi = BrushSize / 2.0f;
         int BrushRadius = Mathf.FloorToInt(Radi);
-
+        //handles square brush size
         if (SquareBrush)
         {
             int Offset = 0;
+            //handles offseting on one side of the paint for even brush sizes, uses mod to detect if the radi is a float value
             if (Radi % 1 > 0)
             {
-                Debug.Log("Float");
                 Offset = 0;
             }
             else
@@ -289,6 +324,7 @@ public class PaintingToolScript
                 Offset = 1;
             }
 
+            //iterates over the area around the pressed pixel
             for (int Py = -BrushRadius + Offset; Py <= BrushRadius; Py++)
             {
                 for (int Px = -BrushRadius; Px <= BrushRadius - Offset; Px++)
@@ -312,7 +348,7 @@ public class PaintingToolScript
 
                     int xx = x + px;
                     int yy = y + py;
-
+                    //uses euclidean distance to handle circular brush
                     float distance = Mathf.Sqrt(Mathf.Pow((x - xx), 2) + Mathf.Pow((y - yy), 2));
                     if (Mathf.Abs(distance) > Radi)
                         continue;
@@ -325,7 +361,7 @@ public class PaintingToolScript
             }
         }
     }
-  
+  //gets the top most colour at the pressed place, iterates over all layers till a colour is found, or returns null
     private void EyeDropper(int x, int y)
     {
         foreach (PaintLayer Layer in CanvasImage[SelectedAnimation])
@@ -341,6 +377,7 @@ public class PaintingToolScript
             }
         }
     }
+    //used to fill in a colour at a selected area, uses a queue iteration to loop over area
     private void Fill(int x, int y, Color ColorToFill)
     {
         if (x < 0 || x >= CanvasWidth || y < 0 || y >=CanvasHeight)
@@ -376,15 +413,18 @@ public class PaintingToolScript
 
         Layer.Apply();
     }
+    //gets the colour at a specified pixel
     private Color GetPixel(int x, int y)
     {
        return CanvasImage[SelectedAnimation][SelectedLayer].LayerImage.GetPixel(x,y);
     }
+    //changes the colour for the brush
     public void ChangeColour(Color ColourChange)
     {
         SelectedColour = ColourChange;
     }
-
+    
+    //to be called by the editor, undoes changes using a stack iteration, any changes undone is then pushed to the redo stack so they can be redone
     public void Undo()
     {
         if (!UndoRedoStack.isEmpty())
@@ -413,11 +453,13 @@ public class PaintingToolScript
         StoredUndoChange = CurrentChange;
         if (CurrentChange != null)
         {
+            //handles applying the fetched change
             ApplyChange((ChangesStack.Changes)CurrentChange,false);
         }
         isUndoRedo = false;
         }
     }
+    //to be called by the editor, handles redoing changes, all redone changes are pushed back to the undo stack
     public void Redo()
     {
         if (!UndoRedoStack.Redo.isEmpty())
@@ -432,6 +474,7 @@ public class PaintingToolScript
         isUndoRedo = false;
         }
     }
+    //to be called to register a change to be added to the undo stack, only used to record layer/animation changes does not handle deletes or added data
     public void ChangeMade()
     {
         UnityEngine.Debug.Log("ChangeMade");
@@ -442,6 +485,7 @@ public class PaintingToolScript
         StoredUndoChange = null;
         UndoRedoStack.push(GetChange());
     }
+    //used to fetch the current state of the board and stores it in a change format
     private ChangesStack.Changes GetChange()
     {
         ChangesStack.Changes NewChange;
@@ -463,6 +507,7 @@ public class PaintingToolScript
 
         return NewChange;
     }
+    //called to apply a change
     public void ApplyChange(ChangesStack.Changes change,bool redo)
     {
         if (!change.Delete && !change.Added && !change.Move)
@@ -682,23 +727,28 @@ public class PaintingToolScript
         }
         UpdateDisplayImage();
     }
+    //called to tell the editor to add animation UI panels
     public void AddedAnimation(int index)
     {
         AnimationAdded?.Invoke(index);
     }
+    //called to tell the editor to add Layer UI panels
     public void AddedLayer(int index, PaintLayer layer)
     {
         LayerAdded?.Invoke(index,layer);
     }
+    //called to tell the editor to remove animation UI panels
     public void RemovedAnimation(int index)
     {
         AnimationRemoved?.Invoke(index);
     }
+    //called to tell the editor to remove layer UI panels
     public void RemovedLayer(int index)
     {
         LayerRemoved?.Invoke(index);
     }
 
+    //handles switching the selected layer, also communicates to the UI to update the visuals for the layers to mark the correct layer selection
     public void UpdateSelectedLayer(int NewLayerIndex, bool? dochange)
     {
         if(isUndoRedo)
@@ -707,9 +757,8 @@ public class PaintingToolScript
             return;
         SelectedLayer = NewLayerIndex;
         LayerSelected?.Invoke();
-        UnityEngine.Debug.Log("Layer :" + SelectedLayer);
     }
-
+    //handles switching the selected animation, also communicates to the UI to update the visuals for the frames to mark the correct frame selection
     public void UpdateSelectedAnimation(int NewAnimationIndex,bool? dochange)
     {
         if(isUndoRedo)
@@ -722,6 +771,7 @@ public class PaintingToolScript
         UpdateDisplayImage();
     }
 
+    //intialises the parsed texture as a empty texture
     private void FillTexture2D(Texture2D layer)
     {
         Color32[] colors = new Color32[layer.width * layer.height];
@@ -730,7 +780,7 @@ public class PaintingToolScript
         layer.SetPixels32(colors);
         layer.Apply();
     }
-
+    //changes the visibilty of a specifed layer, to be called by the editor
     public void UpdateVisibilty(int LayerIndex, bool Visibility)
     {
         ChangeMade();
@@ -742,6 +792,7 @@ public class PaintingToolScript
         }
         UpdateDisplayImage();
     }
+    // updates a layer name at a specifed index
     public void UpdateName(int LayerIndex, string name)
     {
         ChangeMade();
@@ -752,7 +803,7 @@ public class PaintingToolScript
             Frame[LayerIndex] = layer;
         }
     }
-
+    //handles deleting a layer at an index, to be called by the editor
     public bool DeleteLayer(int LayerIndex)
     {
         if (CanvasImage[SelectedAnimation].Count <= 1)
@@ -775,6 +826,7 @@ public class PaintingToolScript
         UpdateDisplayImage();
         return true;
     }
+    //handles deleting a frame at an index, to be called by the editor
     public bool DeleteAnimation(int AnimationIndex)
     {
         if (CanvasImage.Count <= 1)
@@ -794,7 +846,7 @@ public class PaintingToolScript
 
         return true;
     }
-
+    //registers a delete change to add to the undo/redo stack
     public void DeleteMade(int LayerIndex,int AnimationIndex)
     {
         if (isUndoRedo)
@@ -836,6 +888,7 @@ public class PaintingToolScript
 
         UndoRedoStack.push(DeleteChange);
     }
+    //handles a add change when a layer/frame is added so it can be handled by the undo/redo system
     public void AddedMade(int LayerIndex, int AnimationIndex)
     {
         if (isUndoRedo)
@@ -862,7 +915,7 @@ public class PaintingToolScript
 
         UndoRedoStack.push(AddedChange);
     }
-
+    //handles moving layer order
     public bool MoveLayerUp(int index)
     {
         if (index < 1 ||index>=CanvasImage[0].Count|| CanvasImage[0].Count <= 1)
@@ -882,6 +935,7 @@ public class PaintingToolScript
         UpdateDisplayImage();
         return true;
     }
+    //handles moving layer order
     public bool MoveLayerDown(int index)
     {
         if (index < 0||index >= CanvasImage[0].Count-1 || CanvasImage[0].Count <= 1)
@@ -900,6 +954,7 @@ public class PaintingToolScript
         UpdateDisplayImage();
         return true;
     }
+    //handles moving animation order
     public bool MoveAnimationUp(int index)
     {
         if (index < 1 ||index >= CanvasImage.Count|| CanvasImage.Count <= 1)
@@ -915,6 +970,7 @@ public class PaintingToolScript
         UpdateDisplayImage();
         return true;
     }
+    //handles moving animation order
     public bool MoveAnimationDown(int index)
     {
         if (index < 0 ||index >= CanvasImage.Count - 1 || CanvasImage.Count <= 1)
@@ -930,7 +986,7 @@ public class PaintingToolScript
         UpdateDisplayImage();
         return true;
     }
-
+    //adds a layer ordering change to the undo/redo stack so they can be handled correctly
     public void LayerChange(int NewIndex, int OldIndex,bool Layer)
     {
         if (isUndoRedo)
@@ -951,7 +1007,7 @@ public class PaintingToolScript
 
         UndoRedoStack.push(LayerChange);
     }
-
+    //pastes a passed in texture onto the selected layer
     public void PasteLayer(Texture2D textureToPaste)
     {
         ChangeMade();
@@ -967,7 +1023,7 @@ public class PaintingToolScript
         }
         UpdateDisplayImage();
     }
-
+    //loads a layer into the file, used to load in image files from the editor
     public void LoadLayer(Texture2D TextureToLoad, string LayerName)
     {          
             PaintLayer layer = new PaintLayer();
@@ -979,7 +1035,7 @@ public class PaintingToolScript
             layer.LayerImage.filterMode = FilterMode.Point;
             CanvasImage[0].Add(layer);
     }
-
+    //handles creating a spritesheet to export
     public Texture2D GetExportImages()
     {
         Texture2D SpriteSheet = new Texture2D(CanvasWidth * CanvasImage.Count, CanvasHeight);
@@ -1047,6 +1103,7 @@ public class PaintingToolScript
 
         return SpriteSheet;
     }
+    //handles creating a export image to save
     public Texture2D GetExportImage()
     {
         Texture2D ExportTexture = new Texture2D(CanvasWidth, CanvasHeight);
@@ -1110,7 +1167,7 @@ public class PaintingToolScript
 
         return ExportTexture;
     }
-
+    //loads in a custom paint file into the tool
     public void loadPaintData(PaintSO PaintData)
     {
         CanvasWidth = PaintData.width;
@@ -1140,7 +1197,7 @@ public class PaintingToolScript
         }
         UpdateDisplayImage();
     }
-
+    //used to handle animation display
     public Texture2D GetDisplayImageAtFrame(int Frame)
     {
         Texture2D DisplayImage = new Texture2D(CanvasWidth, CanvasHeight);

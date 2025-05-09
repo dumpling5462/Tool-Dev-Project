@@ -7,6 +7,8 @@ public class PainFileParser
 {
     int width;
     int height;
+
+    //parses in the save files into a scriptable object to be loaded into the tool
     public PaintSO ImportFileAtPath(string FilePath)
     {
         PaintSO PaintFile = new PaintSO();
@@ -81,57 +83,4 @@ public class PainFileParser
 
         return Layer;
     }
-
-    public PaintSO ImportBinaryFileAtPath(string FilePath)
-    {
-        PaintSO PaintFile = new PaintSO();
-        using (FileStream fs = new FileStream(FilePath, FileMode.Open, FileAccess.Read))
-        using (BinaryReader reader = new BinaryReader(fs))
-        {
-            PaintFile.width = reader.ReadInt32();     
-            width = PaintFile.width;
-            PaintFile.height = reader.ReadInt32();   
-            height = PaintFile.height;
-            PaintFile.animationIndex = reader.ReadInt32();
-            PaintFile.LayerIndex = reader.ReadInt32();
-
-            PaintFile.PaintData = ReadAnimationData(reader);
-        }
-        return PaintFile;
-    }
-
-    private List<List<PaintingToolScript.PaintLayer>> ReadAnimationData(BinaryReader reader)
-    {
-        List<List<PaintingToolScript.PaintLayer>> animationData = new List<List<PaintingToolScript.PaintLayer>>();
-
-        while (reader.BaseStream.Position < reader.BaseStream.Length)
-        {
-            List<PaintingToolScript.PaintLayer> frame = new List<PaintingToolScript.PaintLayer>();
-
-            while (reader.BaseStream.Position < reader.BaseStream.Length)
-            {
-                string layerName = reader.ReadString();
-                bool layerVisible = reader.ReadBoolean();
-
-                int rawDataLength = reader.ReadInt32();
-                byte[] rawData = reader.ReadBytes(rawDataLength);
-
-                PaintingToolScript.PaintLayer layer;
-                layer.LayerName = layerName;
-                layer.LayerVisible = layerVisible;
-                layer.LayerImage = new Texture2D(width, height, TextureFormat.RGBA32, mipChain: false);
-
-
-                layer.LayerImage.LoadRawTextureData(rawData);
-                layer.LayerImage.Apply();
-
-                frame.Add(layer);
-            }
-
-            animationData.Add(frame);
-        }
-
-        return animationData;
-    }
-
 }

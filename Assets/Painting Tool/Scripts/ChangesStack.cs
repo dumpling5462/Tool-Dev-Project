@@ -22,7 +22,7 @@ public class ChangesStack
     protected Changes[] changeStack;
 
     //initialises stack
-    public virtual void initialize(int Size)
+    public virtual void initialise(int Size)
     {
         StackSize = Size;
         topPointer = 0;

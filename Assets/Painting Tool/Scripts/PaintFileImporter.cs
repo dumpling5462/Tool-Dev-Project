@@ -9,6 +9,8 @@ public class PaintFileImporter : ScriptedImporter
 {
     int width = 16;
     int height = 16;
+
+    //handles importing save files into a scriptable object format
     public override void OnImportAsset(AssetImportContext ctx)
     {
         string fileText = File.ReadAllText(ctx.assetPath);

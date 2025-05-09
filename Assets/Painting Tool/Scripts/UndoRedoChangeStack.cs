@@ -5,11 +5,11 @@ public class UndoRedoChangeStack : ChangesStack
 {
     public ChangesStack Redo;
 
-    public override void initialize(int Size)
+    public override void initialise(int Size)
     {
-        base.initialize(Size);
+        base.initialise(Size);
         Redo = new ChangesStack();
-        Redo.initialize(Size);
+        Redo.initialise(Size);
     }
 
     public override void push(Changes change)

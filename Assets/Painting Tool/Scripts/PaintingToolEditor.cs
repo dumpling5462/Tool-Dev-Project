@@ -135,7 +135,7 @@ public class PaintingToolEditor : EditorWindow
     private void InitializePainter()
     {
         PainterScript = new PaintingToolScript();
-        PainterScript.Initialize(width, height);
+        PainterScript.Initialise(width, height);
     }
 
     private void InitializePaintBindings()
