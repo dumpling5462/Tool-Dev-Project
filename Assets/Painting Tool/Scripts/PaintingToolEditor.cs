@@ -67,7 +67,7 @@ public class PaintingToolEditor : EditorWindow
         PaintingToolEditor window = GetWindow<PaintingToolEditor>();
         window.titleContent = new GUIContent("Help");
     }
-
+    //creates the intial UI, uses an enum to display either the help page or the starting page
     public void CreateGUI()
     { 
         VisualElement root = rootVisualElement;
@@ -88,7 +88,7 @@ public class PaintingToolEditor : EditorWindow
             root.Q<Button>("CloseMenu").clicked += () => { this.Close(); };
         }
     }
-
+    //displays the canvas UXML to prompt the user to choose a canvas size
     private void OpenCanvasSizeMenu()
     {
         VisualElement root = rootVisualElement;
@@ -97,11 +97,13 @@ public class PaintingToolEditor : EditorWindow
         asset.CloneTree(root);
         root.Q<Button>("CreateCanvasButton").clicked += OpenPainter;
     }
+    //once a size has been selected the painter opens
     private void OpenPainter()
     {
         VisualElement root = rootVisualElement;
         width = root.Q<IntegerField>("WidthField").value;
         height = root.Q<IntegerField>("HeightField").value;
+        //if size is to large return an error
         if (width < 1 || width > 512 || height < 1 || height > 512)
         {
             width = 16; height = 16;
@@ -131,13 +133,12 @@ public class PaintingToolEditor : EditorWindow
         Image.style.backgroundImage = new StyleBackground(DisplayImage);
 
     }
-
     private void InitializePainter()
     {
         PainterScript = new PaintingToolScript();
         PainterScript.Initialise(width, height);
     }
-
+    //handles binding up all of the UI elements to their matching function
     private void InitializePaintBindings()
     {
         if (PainterScript == null)
@@ -218,6 +219,7 @@ public class PaintingToolEditor : EditorWindow
 
         //InitializeBrush();
     }
+    //handles moving layers around, to be called when undoing/redoing layer moves
     private void MovedLayer(int OldIndex,int newIndex)
     {
         VisualElement Layer = LayerList.Query<VisualElement>("Layer").ToList()[OldIndex];
@@ -227,16 +229,18 @@ public class PaintingToolEditor : EditorWindow
         UpdateLayerButtons();
 
     }
+    //changes the visibilty toggles on the display UI, called from event attached to the paint tool for undo/redo
     private void LayerVisibiltyChange(int index, bool visibilty)
     {
         LayerList[index].Q<Toggle>("Toggle").value = visibilty;
         UpdateDisplayImage();
     }
+    //changes the name on the layer display UI, called from event attached to the paint tool for undo/redo
     private void LayerNameChange(int index, string name)
     {
         LayerList[index].Q<Button>("LayerButton").text = name;
     }
-
+    //replaces the existing image with the new one, this is called whenever the user makes a change to the canvas
     private void UpdateDisplayImage()
     {
         VisualElement root = rootVisualElement;
@@ -247,7 +251,7 @@ public class PaintingToolEditor : EditorWindow
         DisplayImage.filterMode = FilterMode.Point;
         Image.style.backgroundImage = new StyleBackground(DisplayImage);
     }
-
+    //instances the editor for use with shortcuts, since they require static calls
     private static PaintingToolEditor EditorReference;
     private static void SetEditorReference()
     {
@@ -317,7 +321,7 @@ public class PaintingToolEditor : EditorWindow
         PainterScript.SelectedBrush = PaintingToolScript.BrushMode.Eyedropper;
         UpdateVisual();
     }
-
+    //changes the buttons style settings to display which one is selected
     private void UpdateVisual()
     {
         if (PainterScript == null)
@@ -352,7 +356,7 @@ public class PaintingToolEditor : EditorWindow
                 break;
         }
     }
-
+    //handles swapping style
     private void SwapButtonStyle(Button Button, bool Swap)
     {
         if (Swap)
@@ -454,6 +458,7 @@ public class PaintingToolEditor : EditorWindow
         }
         PainterScript.Redo();
     }
+    //adds a animation UXML tot he animation list and binds all the buttons correctly
     private void AddAnimation()
     {
         if (PainterScript == null)
@@ -481,7 +486,7 @@ public class PaintingToolEditor : EditorWindow
         UpdateAnimationLayers();
         PainterScript.AddAnimation();
     }
-
+    //adds an animation, used by undo/redo index is mostly unnecessary since frames dont hold unique names
     private void AddAnimationAtIndex(int index)
     {
         if (PainterScript == null)
@@ -507,7 +512,7 @@ public class PaintingToolEditor : EditorWindow
         UpdateAnimationLayers();
         UpdateAnimationButtons();
     }
-
+    //adds a later at a specific index with the matching information from the layer info, to be used by the undo/redo system to undo a layer delete
     private void AddLayerAtIndex(int index,PaintingToolScript.PaintLayer LayerData)
     {
         if (PainterScript == null)
@@ -526,6 +531,7 @@ public class PaintingToolEditor : EditorWindow
         UpdateAnimationLayers();
 
         Toggle ToggleButton = Layer.Q<Toggle>("Toggle");
+        ToggleButton.value = LayerData.LayerVisible;
         ToggleButton.RegisterCallback<ClickEvent, Toggle>(ToggleVisibilty, ToggleButton);
         Button DeleteButton = Layer.Q<Button>("DeleteButton");
         DeleteButton.RegisterCallback<ClickEvent, Button>(DeleteLayer, DeleteButton);
@@ -545,6 +551,7 @@ public class PaintingToolEditor : EditorWindow
         }
         UpdateLayerButtons();
     }
+    //removes a layer at a specifed index, for use with undo/redo or ui integration
     private void RemoveLayerAtIndex(int index)
     {
         if (PainterScript.DeleteLayer(index))
@@ -557,6 +564,7 @@ public class PaintingToolEditor : EditorWindow
         }
         UpdateLayerButtons();
     }
+    //removes a animation at a specific index, for use with frame deletions or undo redo integration
     private void RemoveAnimationAtIndex(int index)
     {
         if (PainterScript == null)
@@ -572,7 +580,7 @@ public class PaintingToolEditor : EditorWindow
         }
         UpdateAnimationButtons();
     }
-
+    //delete animation button bind
     private void DeleteAnimation(ClickEvent click,Button AnimationToDelete)
     {
         if (PainterScript == null)
@@ -585,6 +593,7 @@ public class PaintingToolEditor : EditorWindow
         RemoveAnimationAtIndex(AnimationList.IndexOf(FindChild(AnimationList,AnimationToDelete)));
         UpdateAnimationButtons();
     }
+    //delete layer button bind
     private void DeleteLayer(ClickEvent click,Button LayerToDelete)
     {
         if (PainterScript == null)
@@ -597,6 +606,7 @@ public class PaintingToolEditor : EditorWindow
         RemoveLayerAtIndex(LayerList.IndexOf(FindChild(LayerList,LayerToDelete)));
         UpdateLayerButtons();
     }
+    //button bind to change what frame the user has selected
     private void SelectAnimationAndFrame(ClickEvent click,Button button)
     {
         if (PainterScript == null)
@@ -824,25 +834,26 @@ public class PaintingToolEditor : EditorWindow
         x = x - minBound.x;
         y = y - minBound.y;
 
-        // Element size
+        //size of the visual element
         float elementWidth = maxBound.x - minBound.x;
         float elementHeight = maxBound.y - minBound.y;
 
 
-        // How the texture is scaled to fit
+        //calculates the scale value of the element by dividing them by the set width and height
         float scaleX = elementWidth / width;
         float scaleY = elementHeight / height;
-
+        //due to the scale to fit settings, the min scale is taken since that is the scale the image will use
         float scale = Mathf.Min(scaleX, scaleY);
 
+        //calculates the scaled up width and height values of the displayed texture
         float textureDisplayWidth = width * scale;
         float textureDisplayHeight = height * scale;
 
-        // Offsets if the texture is centered
+        //calulates an offset value
         float offsetX = (elementWidth - textureDisplayWidth) / 2;
         float offsetY = (elementHeight - textureDisplayHeight) / 2;
 
-        // Mouse position relative to texture
+        // calculates the mouses relative location on the texture
         float textureX = (x - offsetX) / scale;
         float textureY = (y - offsetY) / scale;
         textureY = height - textureY;
